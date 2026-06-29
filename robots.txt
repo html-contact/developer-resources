@@ -1,5 +1,6 @@
-# html.contact welcomes search crawlers, AI answer engines, and coding agents on public pages.
-# The signed-in dashboard is private and should not be indexed.
+# html.contact robots.txt
+# Public marketing pages, docs, examples, and machine-readable resources may be crawled.
+# Signed-in dashboards, API routes, verification routes, and form submission endpoints are not crawler targets.
 # Agent-readable resources:
 # - https://html.contact/llms.txt
 # - https://html.contact/llms-full.txt
@@ -7,6 +8,7 @@
 # - https://html.contact/pricing.md
 # - https://html.contact/openapi.json
 # - https://html.contact/humans.txt
+# - https://github.com/html-contact/developer-resources
 
 User-agent: GPTBot
 User-agent: ChatGPT-User
@@ -18,10 +20,22 @@ User-agent: Bingbot
 Allow: /
 Disallow: /app
 Disallow: /app/
+Disallow: /api/
+Disallow: /auth/
+Disallow: /f/
+Disallow: /submit
+Disallow: /verify-linked-email
+Disallow: /verify-recipient
 
 User-agent: *
 Allow: /
 Disallow: /app
 Disallow: /app/
+Disallow: /api/
+Disallow: /auth/
+Disallow: /f/
+Disallow: /submit
+Disallow: /verify-linked-email
+Disallow: /verify-recipient
 
 Sitemap: https://html.contact/sitemap-index.xml

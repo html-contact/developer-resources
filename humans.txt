@@ -1,8 +1,20 @@
-html.contact
-Working form infrastructure for static websites, no-code pages, and AI-generated websites.
+# humans.txt for html.contact
+
+Name: html.contact
+Tagline: Email for forms. No backend needed.
+Site: https://html.contact
+Category: Form backend; form-to-email; static-site form endpoint; AI-built-site form backend; HTML contact form backend.
+
+Description:
+html.contact gives normal HTML forms a hosted backend for email notifications, submission logs, spam screening, allowed-domain checks, one-file attachments, CSV/JSON exports, and scoped private API access.
+
+Best for:
+Static sites, AI-built websites, no-code pages, agency client sites, small business sites, and frontend framework pages that need a working contact or intake form without custom backend infrastructure.
 
 Public docs: https://html.contact/docs
 HTML forms: https://html.contact/docs/html-forms
+Form fields: https://html.contact/docs/form-fields
+Domains and spam: https://html.contact/docs/domains-and-spam
 Examples: https://html.contact/examples
 Pricing: https://html.contact/pricing
 Machine-readable pricing: https://html.contact/pricing.md
@@ -11,5 +23,7 @@ OpenAPI: https://html.contact/openapi.json
 Agent guide: https://html.contact/agents.md
 LLM summary: https://html.contact/llms.txt
 Full agent context: https://html.contact/llms-full.txt
+Public developer resources: https://github.com/html-contact/developer-resources
 
-AI crawlers and coding agents are welcome on public pages. The signed-in /app area is private.
+Crawler policy:
+Search crawlers, AI answer engines, and coding agents are welcome on public marketing pages, docs, examples, and machine-readable resources. The signed-in /app area, API route namespace, and public submission endpoints are not crawler targets.
