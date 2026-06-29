@@ -1,0 +1,4115 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "html.contact API",
+    "version": "0.1.0",
+    "summary": "Instant form backend for static websites.",
+    "description": "html.contact turns plain HTML form posts into email notifications, private submission logs, CSV exports, and authenticated attachment downloads.\n\nThere are two key types:\n\n- **Public form keys** start with `hc_pub_`. They are safe to place in frontend HTML and are used with `POST /f/{formKey}` or `POST /submit`.\n- **Private API keys** start with `hc_live_`. They must stay on trusted servers, automations, or agents and are sent as `Authorization: Bearer hc_live_example_DO_NOT_USE`.\n\nPublic browser forms submit `application/x-www-form-urlencoded` or `multipart/form-data`. Public JSON request bodies are not supported. Every input that should be stored needs a `name` attribute.\n\n`*_REPLACE` values in examples are placeholders. Replace them with values from your account before making requests. In curl examples, set `HC_API_KEY`, `FORM_ID`, `SUBMISSION_ID`, and `ATTACHMENT_ID` variables first.\n\nDomain allowlists use `Origin` and `Referer` as browser-source signals. They help block casual cross-site misuse, but they are not cryptographic proof that a request came from a domain.",
+    "contact": {
+      "name": "html.contact",
+      "url": "https://html.contact"
+    },
+    "license": {
+      "name": "Proprietary"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://html.contact"
+    }
+  ],
+  "externalDocs": {
+    "description": "html.contact docs",
+    "url": "https://html.contact/docs"
+  },
+  "tags": [
+    {
+      "name": "Public Forms",
+      "description": "Unauthenticated browser form submissions using public `hc_pub_` form keys.",
+      "externalDocs": {
+        "description": "HTML form guide",
+        "url": "https://html.contact/docs/html-forms/"
+      }
+    },
+    {
+      "name": "Forms",
+      "description": "Authenticated form management endpoints for server-side integrations and approved agents.",
+      "externalDocs": {
+        "description": "Getting started",
+        "url": "https://html.contact/docs/getting-started/"
+      }
+    },
+    {
+      "name": "Submissions",
+      "description": "Authenticated submission logs, filters, detail views, and CSV exports.",
+      "externalDocs": {
+        "description": "API guide",
+        "url": "https://html.contact/docs/api/"
+      }
+    },
+    {
+      "name": "Attachments",
+      "description": "Authenticated downloads for files uploaded through normal HTML file inputs.",
+      "externalDocs": {
+        "description": "Attachments guide",
+        "url": "https://html.contact/docs/attachments/"
+      }
+    },
+    {
+      "name": "Usage",
+      "description": "Safe submission usage summaries for warning users before they reach submission limits.",
+      "externalDocs": {
+        "description": "API guide",
+        "url": "https://html.contact/docs/api/"
+      }
+    }
+  ],
+  "x-agent-notes": [
+    "Never expose hc_live API keys in frontend code.",
+    "Use hc_pub public form keys only in HTML.",
+    "Every input that should be collected needs a name attribute.",
+    "Use method=\"POST\" for browser forms.",
+    "Public form posts support application/x-www-form-urlencoded and multipart/form-data, not JSON bodies.",
+    "Whitelisted domains use Origin/Referer as browser-source signals, not cryptographic proof.",
+    "The submitted field named subject is a normal submitted field and controls notification subject when present. _subject and _intro are ordinary submitted fields.",
+    "Reserved system fields are _redirect, _replyto, _form_name, _source, _tag, _gotcha, any _hc_hp_* honeypot field, cf-turnstile-response, and form_key.",
+    "Unsupported routing-looking fields such as _to, _cc, _bcc, and _from are preserved as ordinary submitted fields and never control email routing."
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerApiKey": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "hc_live",
+        "description": "Private API key. Keep `hc_live_` keys on trusted servers, automations, or approved agents only."
+      }
+    },
+    "responses": {
+      "Forbidden": {
+        "description": "Current scoped private API behavior for missing, invalid, expired, or insufficient private API keys.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "examples": {
+              "forbidden": {
+                "summary": "Missing or invalid API key",
+                "value": {
+                  "ok": false,
+                  "error": {
+                    "code": "forbidden",
+                    "message": "Authentication required."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "The requested resource was not found.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "examples": {
+              "notFound": {
+                "summary": "Form not found",
+                "value": {
+                  "ok": false,
+                  "error": {
+                    "code": "form_not_found",
+                    "message": "Form not found."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "ValidationError": {
+        "description": "The request body or query parameters were invalid.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "examples": {
+              "validationError": {
+                "summary": "Validation error",
+                "value": {
+                  "ok": false,
+                  "error": {
+                    "code": "validation_error",
+                    "message": "The form submission could not be parsed."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "RateLimited": {
+        "description": "Too many requests were sent in the current rate-limit window.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "examples": {
+              "rateLimited": {
+                "summary": "Rate limited",
+                "value": {
+                  "ok": false,
+                  "error": {
+                    "code": "rate_limited",
+                    "message": "Too many submissions. Please try again shortly."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "RecipientVerificationRateLimited": {
+        "description": "Recipient verification was requested too quickly.",
+        "headers": {
+          "x-retry-after": {
+            "description": "Seconds to wait before retrying.",
+            "schema": {
+              "type": "string",
+              "example": "30"
+            }
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "required": [
+                "ok",
+                "error",
+                "retry_after_seconds"
+              ],
+              "properties": {
+                "ok": {
+                  "type": "boolean",
+                  "const": false
+                },
+                "error": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                },
+                "retry_after_seconds": {
+                  "type": "integer",
+                  "example": 30
+                }
+              }
+            },
+            "examples": {
+              "rateLimited": {
+                "summary": "Rate limited",
+                "value": {
+                  "ok": false,
+                  "error": {
+                    "code": "rate_limited",
+                    "message": "Please wait 30 seconds before sending another verification email."
+                  },
+                  "retry_after_seconds": 30
+                }
+              }
+            }
+          }
+        }
+      },
+      "InternalError": {
+        "description": "Unexpected server error.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "examples": {
+              "internalError": {
+                "summary": "Internal error",
+                "value": {
+                  "ok": false,
+                  "error": {
+                    "code": "internal_error",
+                    "message": "Something went wrong."
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "ErrorBody": {
+        "type": "object",
+        "required": [
+          "code",
+          "message"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Stable machine-readable error code.",
+            "examples": [
+              "domain_not_allowed"
+            ]
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable error message.",
+            "examples": [
+              "This form is not allowed on this website."
+            ]
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "required": [
+          "ok",
+          "error"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": false
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorBody"
+          }
+        },
+        "examples": [
+          {
+            "ok": false,
+            "error": {
+              "code": "domain_not_allowed",
+              "message": "This form is not allowed on this website."
+            }
+          }
+        ]
+      },
+      "PublicFormSubmission": {
+        "type": "object",
+        "description": "A normal browser form payload. Any named non-reserved field is stored. Duplicate names are stored as arrays.",
+        "additionalProperties": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          ]
+        },
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Mara Quill"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "mara@example.com"
+          },
+          "phone": {
+            "type": "string",
+            "example": "+1 317 555 0198"
+          },
+          "company": {
+            "type": "string",
+            "example": "Tiny Bakery"
+          },
+          "subject": {
+            "type": "string",
+            "description": "Normal submitted field that also controls the notification email subject when present.",
+            "example": "Quote request"
+          },
+          "message": {
+            "type": "string",
+            "example": "Can you send pricing for a five page site?"
+          },
+          "_redirect": {
+            "type": "string",
+            "format": "uri",
+            "description": "Reserved system field. Optional redirect URL considered after successful browser submission before the form default redirect. Use an absolute https:// URL, or localhost/127.0.0.1 http URL for local development.",
+            "example": "https://example.com/thanks"
+          },
+          "_replyto": {
+            "type": "string",
+            "description": "Reserved system field. Email address or field name used to infer reply-to. Example: `email` points to the submitted email field.",
+            "example": "email"
+          },
+          "_form_name": {
+            "type": "string",
+            "description": "Reserved metadata field stored with system fields.",
+            "example": "Contact"
+          },
+          "_source": {
+            "type": "string",
+            "description": "Reserved metadata field stored with system fields.",
+            "example": "homepage"
+          },
+          "_tag": {
+            "type": "string",
+            "description": "Reserved metadata field stored with system fields.",
+            "example": "quote"
+          },
+          "_gotcha": {
+            "type": "string",
+            "description": "Reserved system honeypot field. Leave empty in real browser forms.",
+            "example": ""
+          },
+          "_hc_hp_company": {
+            "type": "string",
+            "description": "Example `_hc_hp_*` honeypot system field. Any field name beginning with `_hc_hp_` is stored with system fields and rejected if filled.",
+            "example": ""
+          },
+          "cf-turnstile-response": {
+            "type": "string",
+            "description": "Reserved system field for customer-managed challenge data. Default html.contact snippets do not require it."
+          }
+        },
+        "examples": [
+          {
+            "name": "Mara Quill",
+            "email": "mara@example.com",
+            "subject": "Quote request",
+            "message": "Can you send pricing for a five page site?"
+          }
+        ]
+      },
+      "PublicFormSubmissionMultipart": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/PublicFormSubmission"
+          }
+        ],
+        "type": "object",
+        "properties": {
+          "attachment": {
+            "type": "string",
+            "format": "binary",
+            "description": "One non-empty file input. Current limit is one attachment up to 4 MB."
+          }
+        }
+      },
+      "PublicFormSubmissionWithHiddenKey": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/PublicFormSubmission"
+          }
+        ],
+        "type": "object",
+        "required": [
+          "form_key"
+        ],
+        "properties": {
+          "form_key": {
+            "type": "string",
+            "pattern": "^hc_pub_[A-Za-z0-9]{36}$",
+            "description": "Public form key used by the compatibility `/submit` endpoint.",
+            "example": "hc_pub_abcdefghijklmnopqrstuvwxyzABCDEFGHIJ"
+          }
+        }
+      },
+      "PublicFormSubmissionWithHiddenKeyMultipart": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/PublicFormSubmissionWithHiddenKey"
+          }
+        ],
+        "type": "object",
+        "required": [
+          "form_key"
+        ],
+        "properties": {
+          "attachment": {
+            "type": "string",
+            "format": "binary",
+            "description": "One non-empty file input. Current limit is one attachment up to 4 MB."
+          }
+        }
+      },
+      "SubmissionAccepted": {
+        "type": "object",
+        "required": [
+          "ok",
+          "submission_id",
+          "email_status"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": true
+          },
+          "submission_id": {
+            "type": "string",
+            "example": "sub_REPLACE"
+          },
+          "email_status": {
+            "type": "string",
+            "enum": [
+              "not_attempted",
+              "pending",
+              "provider_accepted",
+              "queued",
+              "delivered",
+              "failed",
+              "bounced",
+              "suppressed",
+              "unknown"
+            ],
+            "example": "provider_accepted"
+          }
+        }
+      },
+      "FormRecipient": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "email",
+          "role",
+          "verificationStatus",
+          "deliverabilityStatus",
+          "verifiedAt"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "owner@example.com"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "to",
+              "cc",
+              "bcc"
+            ],
+            "example": "to"
+          },
+          "verificationStatus": {
+            "type": "string",
+            "enum": [
+              "verified",
+              "unverified",
+              "pending"
+            ],
+            "example": "verified"
+          },
+          "deliverabilityStatus": {
+            "type": "string",
+            "enum": [
+              "unknown",
+              "ok",
+              "bounced",
+              "suppressed"
+            ],
+            "example": "ok"
+          },
+          "verifiedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "example": "2026-06-15T18:04:12.000Z"
+          }
+        }
+      },
+      "Form": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "publicKey",
+          "name",
+          "status",
+          "recipientEmail",
+          "recipientVerifiedAt",
+          "allowedDomains",
+          "emailNotificationsEnabled",
+          "allowDirectPosts",
+          "lifetimeSubmissionCount",
+          "lifetimeSubmissionLimit",
+          "createdAt",
+          "updatedAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "form_REPLACE"
+          },
+          "publicKey": {
+            "type": "string",
+            "pattern": "^hc_pub_[A-Za-z0-9]{36}$",
+            "example": "hc_pub_abcdefghijklmnopqrstuvwxyzABCDEFGHIJ"
+          },
+          "name": {
+            "type": "string",
+            "example": "Website contact"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "paused",
+              "disabled",
+              "deleted"
+            ],
+            "example": "active"
+          },
+          "recipientEmail": {
+            "type": "string",
+            "format": "email",
+            "example": "owner@example.com"
+          },
+          "recipientVerifiedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "example": "2026-06-15T18:04:12.000Z"
+          },
+          "allowedDomains": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Allowed source domains for browser form posts.",
+            "example": [
+              "example.com",
+              "www.example.com"
+            ]
+          },
+          "defaultSubject": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "New website inquiry"
+          },
+          "defaultIntro": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "A new message arrived from your website."
+          },
+          "defaultRedirectUrl": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uri",
+            "example": "https://example.com/thanks"
+          },
+          "emailNotificationsEnabled": {
+            "type": "boolean",
+            "description": "When true, accepted submissions attempt notification email delivery. When false, accepted submissions are stored without attempting notification email.",
+            "example": true
+          },
+          "honeypotField": {
+            "type": "string",
+            "example": "_gotcha"
+          },
+          "allowDirectPosts": {
+            "type": "boolean",
+            "description": "When true, trusted server/curl posts without browser source headers may be accepted. Leave false for normal website forms.",
+            "example": false
+          },
+          "lifetimeSubmissionLimit": {
+            "type": "integer",
+            "description": "Legacy form-level metadata retained for compatibility.",
+            "example": 250
+          },
+          "lifetimeSubmissionCount": {
+            "type": "integer",
+            "example": 7
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-06-15T17:50:30.000Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-06-15T18:04:12.000Z"
+          },
+          "formRecipients": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FormRecipient"
+            }
+          },
+          "snippet": {
+            "type": "string",
+            "description": "Copy-paste HTML form snippet generated for this form."
+          }
+        },
+        "examples": [
+          {
+            "id": "form_REPLACE",
+            "publicKey": "hc_pub_abcdefghijklmnopqrstuvwxyzABCDEFGHIJ",
+            "name": "Website contact",
+            "status": "active",
+            "recipientEmail": "owner@example.com",
+            "recipientVerifiedAt": "2026-06-15T18:04:12.000Z",
+            "allowedDomains": [
+              "example.com",
+              "www.example.com"
+            ],
+            "defaultSubject": "New website inquiry",
+            "defaultIntro": "A new message arrived from your website.",
+            "defaultRedirectUrl": "https://example.com/thanks",
+            "emailNotificationsEnabled": true,
+            "honeypotField": "_gotcha",
+            "allowDirectPosts": false,
+            "lifetimeSubmissionLimit": 250,
+            "lifetimeSubmissionCount": 7,
+            "createdAt": "2026-06-15T17:50:30.000Z",
+            "updatedAt": "2026-06-15T18:04:12.000Z",
+            "formRecipients": [
+              {
+                "email": "owner@example.com",
+                "role": "to",
+                "verificationStatus": "verified",
+                "deliverabilityStatus": "ok",
+                "verifiedAt": "2026-06-15T18:04:12.000Z"
+              },
+              {
+                "email": "ops@example.com",
+                "role": "cc",
+                "verificationStatus": "verified",
+                "deliverabilityStatus": "ok",
+                "verifiedAt": "2026-06-15T18:05:12.000Z"
+              }
+            ],
+            "snippet": "<form action=\"https://html.contact/f/hc_pub_abcdefghijklmnopqrstuvwxyzABCDEFGHIJ\" method=\"POST\">\n  <input name=\"name\" required>\n  <input name=\"email\" type=\"email\" required>\n  <textarea name=\"message\" required></textarea>\n  <button type=\"submit\">Send</button>\n</form>"
+          }
+        ]
+      },
+      "CreateFormRequest": {
+        "type": "object",
+        "required": [
+          "name",
+          "recipientEmail",
+          "allowedDomain"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Website contact"
+          },
+          "recipientEmail": {
+            "type": "string",
+            "format": "email",
+            "example": "owner@example.com"
+          },
+          "ccEmail": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "email",
+            "example": "ops@example.com"
+          },
+          "bccEmail": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "email",
+            "example": null
+          },
+          "allowedDomain": {
+            "type": "string",
+            "example": "example.com"
+          },
+          "defaultSubject": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "New website inquiry"
+          },
+          "defaultIntro": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "A new message arrived from your website."
+          },
+          "defaultRedirectUrl": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uri",
+            "example": "https://example.com/thanks"
+          },
+          "emailNotificationsEnabled": {
+            "type": "boolean",
+            "description": "Optional notification toggle. Defaults to true when omitted. Set false to store accepted submissions without sending notification email.",
+            "example": true
+          }
+        }
+      },
+      "UpdateFormRequest": {
+        "type": "object",
+        "minProperties": 1,
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Main contact form"
+          },
+          "recipientEmail": {
+            "type": "string",
+            "format": "email",
+            "example": "owner@example.com"
+          },
+          "ccEmail": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "email",
+            "example": "ops@example.com"
+          },
+          "bccEmail": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "email",
+            "example": null
+          },
+          "allowedDomains": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "example.com",
+              "www.example.com"
+            ]
+          },
+          "defaultSubject": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "New website inquiry"
+          },
+          "defaultIntro": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "A new message arrived from your website."
+          },
+          "defaultRedirectUrl": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uri",
+            "example": "https://example.com/thanks"
+          },
+          "emailNotificationsEnabled": {
+            "type": "boolean",
+            "description": "Set true or false to enable or disable notification email attempts for accepted submissions.",
+            "example": false
+          },
+          "allowDirectPosts": {
+            "type": "boolean",
+            "example": false
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "paused",
+              "disabled"
+            ],
+            "example": "active"
+          }
+        }
+      },
+      "DuplicateFormRequest": {
+        "type": "object",
+        "description": "Optional settings for duplicating an existing form. When omitted, the duplicated form uses the source form name plus `copy`.",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Optional name for the duplicated form.",
+            "example": "Website contact copy"
+          }
+        }
+      },
+      "FormsListResponse": {
+        "type": "object",
+        "required": [
+          "ok",
+          "forms"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": true
+          },
+          "forms": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Form"
+            }
+          }
+        }
+      },
+      "FormResponse": {
+        "type": "object",
+        "required": [
+          "ok",
+          "form"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": true
+          },
+          "form": {
+            "$ref": "#/components/schemas/Form"
+          }
+        }
+      },
+      "EmailSendResult": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": [
+          "status",
+          "provider"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "not_attempted",
+              "pending",
+              "provider_accepted",
+              "queued",
+              "delivered",
+              "failed",
+              "bounced",
+              "suppressed",
+              "unknown"
+            ],
+            "example": "provider_accepted"
+          },
+          "provider": {
+            "type": "string",
+            "example": "cloudflare"
+          },
+          "providerMessageId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "msg_REPLACE"
+          },
+          "errorMessage": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": null
+          }
+        }
+      },
+      "TestEmailResponse": {
+        "type": "object",
+        "required": [
+          "ok",
+          "email_id",
+          "result"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "example": true
+          },
+          "email_id": {
+            "type": "string",
+            "example": "email_REPLACE"
+          },
+          "result": {
+            "$ref": "#/components/schemas/EmailSendResult"
+          }
+        }
+      },
+      "RecipientVerificationResponse": {
+        "type": "object",
+        "required": [
+          "ok",
+          "verification_status",
+          "email_status"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": true
+          },
+          "verification_status": {
+            "type": "string",
+            "enum": [
+              "verified",
+              "pending"
+            ],
+            "example": "pending"
+          },
+          "email_status": {
+            "type": "string",
+            "enum": [
+              "not_attempted",
+              "pending",
+              "provider_accepted",
+              "queued",
+              "delivered",
+              "failed",
+              "bounced",
+              "suppressed",
+              "unknown"
+            ],
+            "example": "provider_accepted"
+          },
+          "retry_after_seconds": {
+            "type": "integer",
+            "example": 30
+          }
+        }
+      },
+      "Attachment": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": [
+          "id",
+          "submission_id",
+          "form_id",
+          "field_name",
+          "filename",
+          "content_type",
+          "byte_size",
+          "scan_status",
+          "created_at"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "att_REPLACE"
+          },
+          "submission_id": {
+            "type": "string",
+            "example": "sub_REPLACE"
+          },
+          "form_id": {
+            "type": "string",
+            "example": "form_REPLACE"
+          },
+          "field_name": {
+            "type": "string",
+            "example": "attachment"
+          },
+          "filename": {
+            "type": "string",
+            "example": "quote-request.pdf"
+          },
+          "content_type": {
+            "type": "string",
+            "example": "application/pdf"
+          },
+          "byte_size": {
+            "type": "integer",
+            "example": 188416
+          },
+          "scan_status": {
+            "type": "string",
+            "enum": [
+              "not_scanned",
+              "clean",
+              "suspicious",
+              "blocked"
+            ],
+            "example": "not_scanned"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-06-16T15:04:08.000Z"
+          }
+        },
+        "examples": [
+          {
+            "id": "att_REPLACE",
+            "submission_id": "sub_REPLACE",
+            "form_id": "form_REPLACE",
+            "field_name": "attachment",
+            "filename": "quote-request.pdf",
+            "content_type": "application/pdf",
+            "byte_size": 188416,
+            "scan_status": "not_scanned",
+            "created_at": "2026-06-16T15:04:08.000Z"
+          }
+        ]
+      },
+      "SubmissionListItem": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": [
+          "id",
+          "form_id",
+          "status",
+          "fields_json",
+          "fields_order_json",
+          "system_fields_json",
+          "source_allowed",
+          "spam_status",
+          "email_status",
+          "created_at"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "sub_REPLACE"
+          },
+          "form_id": {
+            "type": "string",
+            "example": "form_REPLACE"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "received",
+              "accepted",
+              "blocked",
+              "stored",
+              "email_attempted",
+              "complete"
+            ],
+            "example": "accepted"
+          },
+          "fields_json": {
+            "type": "string",
+            "description": "JSON string of submitted non-reserved fields. Parse this client-side to get a field object.",
+            "example": "{\"name\":\"Mara Quill\",\"email\":\"mara@example.com\",\"subject\":\"Quote request\",\"message\":\"Can you send pricing for a five page site?\",\"attachment\":\"quote-request.pdf\"}"
+          },
+          "fields_order_json": {
+            "type": "string",
+            "description": "JSON string preserving submitted field order and file placeholders. Parse this client-side to display fields in submission order.",
+            "example": "[{\"name\":\"name\",\"value\":\"Mara Quill\",\"type\":\"text\"},{\"name\":\"email\",\"value\":\"mara@example.com\",\"type\":\"text\"},{\"name\":\"subject\",\"value\":\"Quote request\",\"type\":\"text\"},{\"name\":\"message\",\"value\":\"Can you send pricing for a five page site?\",\"type\":\"text\"},{\"name\":\"attachment\",\"value\":\"quote-request.pdf\",\"type\":\"file\"}]"
+          },
+          "system_fields_json": {
+            "type": "string",
+            "description": "JSON string of reserved system fields such as `_redirect`, `_replyto`, `_form_name`, `_source`, `_tag`, `_gotcha`, `_hc_hp_*`, `cf-turnstile-response`, and `form_key`. Parse this client-side if you need system-field values.",
+            "example": "{\"_redirect\":\"https://example.com/thanks\"}"
+          },
+          "submitter_email": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "email",
+            "example": "mara@example.com"
+          },
+          "submitter_name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "Mara Quill"
+          },
+          "submitter_phone": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": null
+          },
+          "source_url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uri",
+            "example": "https://example.com/contact"
+          },
+          "source_host": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "example.com"
+          },
+          "source_allowed": {
+            "type": "integer",
+            "enum": [
+              0,
+              1
+            ],
+            "description": "Current API returns a numeric flag: `1` when the source matched allowed-domain rules, `0` when it did not.",
+            "example": 1
+          },
+          "spam_status": {
+            "type": "string",
+            "enum": [
+              "not_checked",
+              "passed",
+              "blocked",
+              "suspicious"
+            ],
+            "example": "passed"
+          },
+          "blocked_reason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": null
+          },
+          "email_status": {
+            "type": "string",
+            "enum": [
+              "not_attempted",
+              "pending",
+              "provider_accepted",
+              "queued",
+              "delivered",
+              "failed",
+              "bounced",
+              "suppressed",
+              "unknown"
+            ],
+            "example": "provider_accepted"
+          },
+          "archived_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "description": "Set when the authenticated user archived this submission.",
+            "example": null
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-06-16T15:04:05.000Z"
+          },
+          "cf_ip_country": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "US"
+          },
+          "cf_region": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "Indiana"
+          },
+          "cf_city": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "Indianapolis"
+          },
+          "origin_header": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "https://example.com"
+          },
+          "referer_header": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "https://example.com/contact"
+          },
+          "attachments_json": {
+            "type": "string",
+            "description": "JSON string of attachment metadata. Parse this client-side to get an attachment array. Private storage identifiers are not part of the public contract.",
+            "example": "[{\"id\":\"att_REPLACE\",\"submission_id\":\"sub_REPLACE\",\"form_id\":\"form_REPLACE\",\"field_name\":\"attachment\",\"filename\":\"quote-request.pdf\",\"content_type\":\"application/pdf\",\"byte_size\":188416,\"scan_status\":\"not_scanned\",\"created_at\":\"2026-06-16T15:04:08.000Z\"}]"
+          }
+        },
+        "examples": [
+          {
+            "id": "sub_REPLACE",
+            "form_id": "form_REPLACE",
+            "status": "accepted",
+            "fields_json": "{\"name\":\"Mara Quill\",\"email\":\"mara@example.com\",\"subject\":\"Quote request\",\"message\":\"Can you send pricing for a five page site?\",\"attachment\":\"quote-request.pdf\"}",
+            "fields_order_json": "[{\"name\":\"name\",\"value\":\"Mara Quill\",\"type\":\"text\"},{\"name\":\"email\",\"value\":\"mara@example.com\",\"type\":\"text\"},{\"name\":\"subject\",\"value\":\"Quote request\",\"type\":\"text\"},{\"name\":\"message\",\"value\":\"Can you send pricing for a five page site?\",\"type\":\"text\"},{\"name\":\"attachment\",\"value\":\"quote-request.pdf\",\"type\":\"file\"}]",
+            "system_fields_json": "{\"_redirect\":\"https://example.com/thanks\"}",
+            "submitter_email": "mara@example.com",
+            "submitter_name": "Mara Quill",
+            "submitter_phone": null,
+            "source_url": "https://example.com/contact",
+            "source_host": "example.com",
+            "source_allowed": 1,
+            "spam_status": "passed",
+            "blocked_reason": null,
+            "email_status": "provider_accepted",
+            "created_at": "2026-06-16T15:04:05.000Z",
+            "cf_ip_country": "US",
+            "cf_region": "Indiana",
+            "cf_city": "Indianapolis",
+            "origin_header": "https://example.com",
+            "referer_header": "https://example.com/contact",
+            "attachments_json": "[{\"id\":\"att_REPLACE\",\"submission_id\":\"sub_REPLACE\",\"form_id\":\"form_REPLACE\",\"field_name\":\"attachment\",\"filename\":\"quote-request.pdf\",\"content_type\":\"application/pdf\",\"byte_size\":188416,\"scan_status\":\"not_scanned\",\"created_at\":\"2026-06-16T15:04:08.000Z\"}]"
+          }
+        ]
+      },
+      "Submission": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/SubmissionListItem"
+          },
+          {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": {
+              "events_json": {
+                "type": "string",
+                "description": "Submission detail responses include a JSON string of submission events.",
+                "example": "[{\"event_type\":\"submission_stored\",\"message\":\"Submission stored.\",\"payload_json\":null,\"created_at\":\"2026-06-16T15:04:05.000Z\"}]"
+              }
+            }
+          }
+        ],
+        "examples": [
+          {
+            "id": "sub_REPLACE",
+            "form_id": "form_REPLACE",
+            "status": "accepted",
+            "fields_json": "{\"name\":\"Mara Quill\",\"email\":\"mara@example.com\",\"subject\":\"Quote request\",\"message\":\"Can you send pricing for a five page site?\",\"attachment\":\"quote-request.pdf\"}",
+            "fields_order_json": "[{\"name\":\"name\",\"value\":\"Mara Quill\",\"type\":\"text\"},{\"name\":\"email\",\"value\":\"mara@example.com\",\"type\":\"text\"},{\"name\":\"subject\",\"value\":\"Quote request\",\"type\":\"text\"},{\"name\":\"message\",\"value\":\"Can you send pricing for a five page site?\",\"type\":\"text\"},{\"name\":\"attachment\",\"value\":\"quote-request.pdf\",\"type\":\"file\"}]",
+            "system_fields_json": "{\"_redirect\":\"https://example.com/thanks\"}",
+            "submitter_email": "mara@example.com",
+            "submitter_name": "Mara Quill",
+            "submitter_phone": null,
+            "source_url": "https://example.com/contact",
+            "source_host": "example.com",
+            "source_allowed": 1,
+            "spam_status": "passed",
+            "blocked_reason": null,
+            "email_status": "provider_accepted",
+            "created_at": "2026-06-16T15:04:05.000Z",
+            "cf_ip_country": "US",
+            "cf_region": "Indiana",
+            "cf_city": "Indianapolis",
+            "origin_header": "https://example.com",
+            "referer_header": "https://example.com/contact",
+            "attachments_json": "[{\"id\":\"att_REPLACE\",\"submission_id\":\"sub_REPLACE\",\"form_id\":\"form_REPLACE\",\"field_name\":\"attachment\",\"filename\":\"quote-request.pdf\",\"content_type\":\"application/pdf\",\"byte_size\":188416,\"scan_status\":\"not_scanned\",\"created_at\":\"2026-06-16T15:04:08.000Z\"}]",
+            "events_json": "[{\"event_type\":\"submission_stored\",\"message\":\"Submission stored.\",\"payload_json\":null,\"created_at\":\"2026-06-16T15:04:05.000Z\"}]"
+          }
+        ]
+      },
+      "SubmissionsListResponse": {
+        "type": "object",
+        "required": [
+          "ok",
+          "submissions",
+          "next_cursor",
+          "counts"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": true
+          },
+          "submissions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SubmissionListItem"
+            }
+          },
+          "next_cursor": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "2026-06-16T15%3A04%3A05.000Z%0Asub_REPLACE"
+          },
+          "counts": {
+            "type": "object",
+            "required": [
+              "inbox",
+              "spam",
+              "archived"
+            ],
+            "properties": {
+              "inbox": {
+                "type": "integer",
+                "example": 18
+              },
+              "spam": {
+                "type": "integer",
+                "example": 2
+              },
+              "archived": {
+                "type": "integer",
+                "example": 4
+              }
+            }
+          }
+        }
+      },
+      "SubmissionDetailResponse": {
+        "type": "object",
+        "required": [
+          "ok",
+          "submission"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": true
+          },
+          "submission": {
+            "$ref": "#/components/schemas/Submission"
+          }
+        }
+      },
+      "Usage": {
+        "type": "object",
+        "required": [
+          "forms_count",
+          "submissions_count",
+          "used",
+          "limit",
+          "plan",
+          "plan_label",
+          "period_end",
+          "is_over_limit"
+        ],
+        "properties": {
+          "forms_count": {
+            "type": "integer",
+            "example": 3
+          },
+          "submissions_count": {
+            "type": "integer",
+            "example": 187
+          },
+          "used": {
+            "type": "integer",
+            "example": 187
+          },
+          "limit": {
+            "type": "integer",
+            "example": 1000
+          },
+          "plan": {
+            "type": "string",
+            "enum": [
+              "free",
+              "starter",
+              "pro"
+            ],
+            "example": "starter"
+          },
+          "plan_label": {
+            "type": "string",
+            "example": "Starter"
+          },
+          "period_end": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "example": "2026-07-17T00:00:00.000Z"
+          },
+          "is_over_limit": {
+            "type": "boolean",
+            "example": false
+          }
+        }
+      },
+      "UsageResponse": {
+        "type": "object",
+        "required": [
+          "ok",
+          "usage"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": true
+          },
+          "usage": {
+            "$ref": "#/components/schemas/Usage"
+          }
+        }
+      },
+      "RateLimit": {
+        "type": "object",
+        "description": "Public submit rate-limit policy information. The current error body returns only `rate_limited` and a message.",
+        "properties": {
+          "code": {
+            "type": "string",
+            "example": "rate_limited"
+          },
+          "window_seconds": {
+            "type": "integer",
+            "example": 60
+          },
+          "max_requests": {
+            "type": "integer",
+            "example": 5
+          }
+        }
+      },
+      "Pagination": {
+        "type": "object",
+        "properties": {
+          "limit": {
+            "type": "integer",
+            "example": 50
+          },
+          "next_cursor": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "example": "2026-06-16T15%3A04%3A05.000Z%0Asub_REPLACE"
+          }
+        }
+      },
+      "ApiKeySafe": {
+        "type": "object",
+        "description": "Safe API key metadata shape. API key management endpoints are intentionally not documented as public API routes.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "key_01JZ8M4Q8R9B2C3D5E6F7G8H9J"
+          },
+          "name": {
+            "type": "string",
+            "example": "Read-only reporting key"
+          },
+          "key_start": {
+            "type": "string",
+            "example": "hc_live_examp"
+          },
+          "scopes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "forms:read",
+              "submissions:read"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "example": "active"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-06-15T18:04:12.000Z"
+          },
+          "last_used_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "example": null
+          },
+          "expires_at": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "example": null
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/f/{formKey}": {
+      "post": {
+        "tags": [
+          "Public Forms"
+        ],
+        "operationId": "submitPublicForm",
+        "summary": "Submit a public form",
+        "description": "Accepts a normal browser form post for a public `hc_pub_` form key.\n\nUse this route as the `action` on a plain HTML form. JSON request bodies are rejected. To receive JSON responses while testing, send `Accept: application/json` or append `?format=json`.",
+        "externalDocs": {
+          "description": "HTML form guide",
+          "url": "https://html.contact/docs/html-forms/"
+        },
+        "parameters": [
+          {
+            "name": "formKey",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^hc_pub_[A-Za-z0-9]{36}$"
+            },
+            "example": "hc_pub_abcdefghijklmnopqrstuvwxyzABCDEFGHIJ",
+            "description": "Public form key safe for frontend HTML."
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "json"
+              ]
+            },
+            "description": "Use `json` to request JSON responses from a browser-style form submission."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/PublicFormSubmission"
+              },
+              "examples": {
+                "basicContact": {
+                  "summary": "Basic contact form",
+                  "value": {
+                    "name": "Mara Quill",
+                    "email": "mara@example.com",
+                    "message": "Can you send pricing for a five page site?"
+                  }
+                },
+                "withPhoneCompany": {
+                  "summary": "Contact form with phone and company",
+                  "value": {
+                    "name": "Kaine Hudson",
+                    "email": "kaine@example.com",
+                    "phone": "+1 317 555 0198",
+                    "company": "Hudson Studio",
+                    "message": "We need a working contact form on a static launch page."
+                  }
+                },
+                "systemFields": {
+                  "summary": "Reserved system fields",
+                  "value": {
+                    "name": "Mara Quill",
+                    "email": "mara@example.com",
+                    "subject": "Quote request",
+                    "_replyto": "email",
+                    "_redirect": "https://example.com/thanks",
+                    "_hc_hp_company": "",
+                    "message": "Please send the estimate to my inbox."
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/PublicFormSubmissionMultipart"
+              },
+              "encoding": {
+                "attachment": {
+                  "contentType": "application/pdf,image/png,image/jpeg,text/plain"
+                }
+              },
+              "examples": {
+                "withFileUpload": {
+                  "summary": "Contact form with one attachment",
+                  "value": {
+                    "name": "Mara Quill",
+                    "email": "mara@example.com",
+                    "subject": "Quote request",
+                    "message": "The project brief is attached.",
+                    "attachment": "quote-request.pdf"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Submission accepted. JSON is returned when the request asks for JSON with `Accept: application/json` or `?format=json`; normal browser posts receive a small HTML success page.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmissionAccepted"
+                },
+                "examples": {
+                  "accepted": {
+                    "summary": "Submission accepted",
+                    "value": {
+                      "ok": true,
+                      "submission_id": "sub_REPLACE",
+                      "email_status": "provider_accepted"
+                    }
+                  },
+                  "acceptedNoEmail": {
+                    "summary": "Stored without email delivery",
+                    "value": {
+                      "ok": true,
+                      "submission_id": "sub_01JZ8M7M7FE7CX6N9V2Q8R3D4A",
+                      "email_status": "not_attempted"
+                    }
+                  }
+                }
+              },
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                },
+                "examples": {
+                  "browserSuccess": {
+                    "summary": "Browser success page",
+                    "value": "<!doctype html><html><body><main><h1>Your form was received</h1><p>Thanks. The submission was accepted and saved, so the site owner can review it.</p></main></body></html>"
+                  }
+                }
+              }
+            }
+          },
+          "303": {
+            "description": "Redirect after a successful browser form post. Submitted `_redirect` is considered first; otherwise the form default redirect URL is considered. Redirect URLs must be absolute https:// URLs, except localhost and 127.0.0.1 http URLs for local development. If the chosen URL is missing or invalid, the normal success response is returned.",
+            "headers": {
+              "Location": {
+                "description": "Destination URL for the visitor.",
+                "schema": {
+                  "type": "string",
+                  "format": "uri"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The form payload was invalid, tripped the honeypot, exceeded field/file limits, or was rejected by spam screening.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "validationError": {
+                    "summary": "Validation error",
+                    "value": {
+                      "ok": false,
+                      "error": {
+                        "code": "validation_error",
+                        "message": "The form submission could not be parsed."
+                      }
+                    }
+                  },
+                  "honeypotTriggered": {
+                    "summary": "Honeypot filled",
+                    "value": {
+                      "ok": false,
+                      "error": {
+                        "code": "honeypot_triggered",
+                        "message": "The form could not be submitted."
+                      }
+                    }
+                  },
+                  "spamRejected": {
+                    "summary": "Spam rejected",
+                    "value": {
+                      "ok": false,
+                      "error": {
+                        "code": "spam_detected",
+                        "message": "This message could not be submitted."
+                      }
+                    }
+                  },
+                  "tooManyFields": {
+                    "summary": "Too many fields",
+                    "value": {
+                      "ok": false,
+                      "error": {
+                        "code": "too_many_fields",
+                        "message": "The form has too many fields."
+                      }
+                    }
+                  },
+                  "tooManyFiles": {
+                    "summary": "Too many files",
+                    "value": {
+                      "ok": false,
+                      "error": {
+                        "code": "too_many_files",
+                        "message": "Only one attachment is supported per submission."
+                      }
+                    }
+                  },
+                  "fileTooLarge": {
+                    "summary": "File too large",
+                    "value": {
+                      "ok": false,
+                      "error": {
+                        "code": "file_too_large",
+                        "message": "Attachments must be 4 MB or smaller."
+                      }
+                    }
+                  },
+                  "payloadTooLarge": {
+                    "summary": "Payload too large",
+                    "value": {
+                      "ok": false,
+                      "error": {
+                        "code": "payload_too_large",
+                        "message": "The submitted form is too large."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "The account reached its submission usage limit.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "usageLimitReached": {
+                    "summary": "Usage limit reached",
+                    "value": {
+                      "ok": false,
+                      "error": {
+                        "code": "usage_limit_reached",
+                        "message": "This account has reached its submission usage limit."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The form is inactive or the source is missing/not allowed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "originMissing": {
+                    "summary": "Missing source headers",
+                    "value": {
+                      "ok": false,
+                      "error": {
+                        "code": "origin_missing",
+                        "message": "This form must be submitted from an allowed website."
+                      }
+                    }
+                  },
+                  "domainNotAllowed": {
+                    "summary": "Domain not allowed",
+                    "value": {
+                      "ok": false,
+                      "error": {
+                        "code": "domain_not_allowed",
+                        "message": "This form is not allowed on this website."
+                      }
+                    }
+                  },
+                  "formInactive": {
+                    "summary": "Form inactive",
+                    "value": {
+                      "ok": false,
+                      "error": {
+                        "code": "form_inactive",
+                        "message": "This form is not accepting submissions."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The public form key is missing or invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "missingFormKey": {
+                    "summary": "Missing form key",
+                    "value": {
+                      "ok": false,
+                      "error": {
+                        "code": "form_not_found",
+                        "message": "Missing form key."
+                      }
+                    }
+                  },
+                  "invalidFormKey": {
+                    "summary": "Invalid public form key",
+                    "value": {
+                      "ok": false,
+                      "error": {
+                        "code": "form_not_found",
+                        "message": "This form was not found."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "description": "The submission was accepted but the attachment could not be stored.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "attachmentStoreFailed": {
+                    "summary": "Attachment store failed",
+                    "value": {
+                      "ok": false,
+                      "error": {
+                        "code": "attachment_store_failed",
+                        "message": "The attachment could not be stored. Please try again."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/submit": {
+      "post": {
+        "tags": [
+          "Public Forms"
+        ],
+        "operationId": "submitPublicFormWithHiddenKey",
+        "summary": "Submit a public form with hidden form key",
+        "description": "Compatibility endpoint for forms that include a hidden `form_key` field instead of putting the public key in the URL.",
+        "externalDocs": {
+          "description": "HTML form guide",
+          "url": "https://html.contact/docs/html-forms/"
+        },
+        "parameters": [
+          {
+            "name": "format",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "json"
+              ]
+            },
+            "description": "Use `json` to request JSON responses from a browser-style form submission."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/PublicFormSubmissionWithHiddenKey"
+              },
+              "examples": {
+                "basicContact": {
+                  "summary": "Basic contact form",
+                  "value": {
+                    "form_key": "hc_pub_abcdefghijklmnopqrstuvwxyzABCDEFGHIJ",
+                    "name": "Mara Quill",
+                    "email": "mara@example.com",
+                    "message": "Can you send pricing for a five page site?"
+                  }
+                },
+                "withPhoneCompany": {
+                  "summary": "Contact form with phone and company",
+                  "value": {
+                    "form_key": "hc_pub_abcdefghijklmnopqrstuvwxyzABCDEFGHIJ",
+                    "name": "Kaine Hudson",
+                    "email": "kaine@example.com",
+                    "phone": "+1 317 555 0198",
+                    "company": "Hudson Studio",
+                    "message": "We need a working contact form on a static launch page."
+                  }
+                },
+                "systemFields": {
+                  "summary": "Reserved system fields",
+                  "value": {
+                    "form_key": "hc_pub_abcdefghijklmnopqrstuvwxyzABCDEFGHIJ",
+                    "name": "Mara Quill",
+                    "email": "mara@example.com",
+                    "subject": "Quote request",
+                    "_replyto": "email",
+                    "_redirect": "https://example.com/thanks",
+                    "_hc_hp_company": "",
+                    "message": "Please send the estimate to my inbox."
+                  }
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/PublicFormSubmissionWithHiddenKeyMultipart"
+              },
+              "encoding": {
+                "attachment": {
+                  "contentType": "application/pdf,image/png,image/jpeg,text/plain"
+                }
+              },
+              "examples": {
+                "withFileUpload": {
+                  "summary": "Contact form with one attachment",
+                  "value": {
+                    "form_key": "hc_pub_abcdefghijklmnopqrstuvwxyzABCDEFGHIJ",
+                    "name": "Mara Quill",
+                    "email": "mara@example.com",
+                    "subject": "Quote request",
+                    "message": "The project brief is attached.",
+                    "attachment": "quote-request.pdf"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Submission accepted. JSON is returned when the request asks for JSON with `Accept: application/json` or `?format=json`; normal browser posts receive a small HTML success page.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmissionAccepted"
+                },
+                "examples": {
+                  "accepted": {
+                    "summary": "Submission accepted",
+                    "value": {
+                      "ok": true,
+                      "submission_id": "sub_REPLACE",
+                      "email_status": "provider_accepted"
+                    }
+                  },
+                  "acceptedNoEmail": {
+                    "summary": "Stored without email delivery",
+                    "value": {
+                      "ok": true,
+                      "submission_id": "sub_01JZ8M7M7FE7CX6N9V2Q8R3D4A",
+                      "email_status": "not_attempted"
+                    }
+                  }
+                }
+              },
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                },
+                "examples": {
+                  "browserSuccess": {
+                    "summary": "Browser success page",
+                    "value": "<!doctype html><html><body><main><h1>Your form was received</h1><p>Thanks. The submission was accepted and saved, so the site owner can review it.</p></main></body></html>"
+                  }
+                }
+              }
+            }
+          },
+          "303": {
+            "description": "Redirect after a successful browser form post. Submitted `_redirect` is considered first; otherwise the form default redirect URL is considered. Redirect URLs must be absolute https:// URLs, except localhost and 127.0.0.1 http URLs for local development. If the chosen URL is missing or invalid, the normal success response is returned.",
+            "headers": {
+              "Location": {
+                "description": "Destination URL for the visitor.",
+                "schema": {
+                  "type": "string",
+                  "format": "uri"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The form payload was invalid, tripped the honeypot, exceeded field/file limits, or was rejected by spam screening.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "validationError": {
+                    "summary": "Validation error",
+                    "value": {
+                      "ok": false,
+                      "error": {
+                        "code": "validation_error",
+                        "message": "The form submission could not be parsed."
+                      }
+                    }
+                  },
+                  "honeypotTriggered": {
+                    "summary": "Honeypot filled",
+                    "value": {
+                      "ok": false,
+                      "error": {
+                        "code": "honeypot_triggered",
+                        "message": "The form could not be submitted."
+                      }
+                    }
+                  },
+                  "spamRejected": {
+                    "summary": "Spam rejected",
+                    "value": {
+                      "ok": false,
+                      "error": {
+                        "code": "spam_detected",
+                        "message": "This message could not be submitted."
+                      }
+                    }
+                  },
+                  "tooManyFields": {
+                    "summary": "Too many fields",
+                    "value": {
+                      "ok": false,
+                      "error": {
+                        "code": "too_many_fields",
+                        "message": "The form has too many fields."
+                      }
+                    }
+                  },
+                  "tooManyFiles": {
+                    "summary": "Too many files",
+                    "value": {
+                      "ok": false,
+                      "error": {
+                        "code": "too_many_files",
+                        "message": "Only one attachment is supported per submission."
+                      }
+                    }
+                  },
+                  "fileTooLarge": {
+                    "summary": "File too large",
+                    "value": {
+                      "ok": false,
+                      "error": {
+                        "code": "file_too_large",
+                        "message": "Attachments must be 4 MB or smaller."
+                      }
+                    }
+                  },
+                  "payloadTooLarge": {
+                    "summary": "Payload too large",
+                    "value": {
+                      "ok": false,
+                      "error": {
+                        "code": "payload_too_large",
+                        "message": "The submitted form is too large."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "The account reached its submission usage limit.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "usageLimitReached": {
+                    "summary": "Usage limit reached",
+                    "value": {
+                      "ok": false,
+                      "error": {
+                        "code": "usage_limit_reached",
+                        "message": "This account has reached its submission usage limit."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The form is inactive or the source is missing/not allowed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "originMissing": {
+                    "summary": "Missing source headers",
+                    "value": {
+                      "ok": false,
+                      "error": {
+                        "code": "origin_missing",
+                        "message": "This form must be submitted from an allowed website."
+                      }
+                    }
+                  },
+                  "domainNotAllowed": {
+                    "summary": "Domain not allowed",
+                    "value": {
+                      "ok": false,
+                      "error": {
+                        "code": "domain_not_allowed",
+                        "message": "This form is not allowed on this website."
+                      }
+                    }
+                  },
+                  "formInactive": {
+                    "summary": "Form inactive",
+                    "value": {
+                      "ok": false,
+                      "error": {
+                        "code": "form_inactive",
+                        "message": "This form is not accepting submissions."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The public form key is missing or invalid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "missingFormKey": {
+                    "summary": "Missing form key",
+                    "value": {
+                      "ok": false,
+                      "error": {
+                        "code": "form_not_found",
+                        "message": "Missing form key."
+                      }
+                    }
+                  },
+                  "invalidFormKey": {
+                    "summary": "Invalid public form key",
+                    "value": {
+                      "ok": false,
+                      "error": {
+                        "code": "form_not_found",
+                        "message": "This form was not found."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "$ref": "#/components/responses/RateLimited"
+          },
+          "500": {
+            "description": "The submission was accepted but the attachment could not be stored.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "attachmentStoreFailed": {
+                    "summary": "Attachment store failed",
+                    "value": {
+                      "ok": false,
+                      "error": {
+                        "code": "attachment_store_failed",
+                        "message": "The attachment could not be stored. Please try again."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/forms": {
+      "get": {
+        "tags": [
+          "Forms"
+        ],
+        "operationId": "listForms",
+        "summary": "List forms",
+        "description": "Returns forms owned by the authenticated actor, including public keys, recipient settings, allowed domains, and generated HTML snippets.",
+        "externalDocs": {
+          "description": "API guide",
+          "url": "https://html.contact/docs/api/"
+        },
+        "security": [
+          {
+            "bearerApiKey": []
+          }
+        ],
+        "x-required-scopes": [
+          "forms:read"
+        ],
+        "responses": {
+          "200": {
+            "description": "Forms list.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormsListResponse"
+                },
+                "examples": {
+                  "success": {
+                    "summary": "Forms list",
+                    "value": {
+                      "ok": true,
+                      "forms": [
+                        {
+                          "id": "form_REPLACE",
+                          "publicKey": "hc_pub_abcdefghijklmnopqrstuvwxyzABCDEFGHIJ",
+                          "name": "Website contact",
+                          "status": "active",
+                          "recipientEmail": "owner@example.com",
+                          "recipientVerifiedAt": "2026-06-15T18:04:12.000Z",
+                          "allowedDomains": [
+                            "example.com",
+                            "www.example.com"
+                          ],
+                          "defaultSubject": "New website inquiry",
+                          "defaultIntro": "A new message arrived from your website.",
+                          "defaultRedirectUrl": "https://example.com/thanks",
+                          "emailNotificationsEnabled": true,
+                          "honeypotField": "_gotcha",
+                          "allowDirectPosts": false,
+                          "lifetimeSubmissionLimit": 250,
+                          "lifetimeSubmissionCount": 7,
+                          "createdAt": "2026-06-15T17:50:30.000Z",
+                          "updatedAt": "2026-06-15T18:04:12.000Z",
+                          "formRecipients": [
+                            {
+                              "email": "owner@example.com",
+                              "role": "to",
+                              "verificationStatus": "verified",
+                              "deliverabilityStatus": "ok",
+                              "verifiedAt": "2026-06-15T18:04:12.000Z"
+                            },
+                            {
+                              "email": "ops@example.com",
+                              "role": "cc",
+                              "verificationStatus": "verified",
+                              "deliverabilityStatus": "ok",
+                              "verifiedAt": "2026-06-15T18:05:12.000Z"
+                            }
+                          ],
+                          "snippet": "<form action=\"https://html.contact/f/hc_pub_abcdefghijklmnopqrstuvwxyzABCDEFGHIJ\" method=\"POST\">\n  <input name=\"name\" required>\n  <input name=\"email\" type=\"email\" required>\n  <textarea name=\"message\" required></textarea>\n  <button type=\"submit\">Send</button>\n</form>"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Forms"
+        ],
+        "operationId": "createForm",
+        "summary": "Create form",
+        "description": "Creates a form for a verified linked recipient and one initial allowed domain. Requires a private API key with form-manager permissions.",
+        "externalDocs": {
+          "description": "Getting started",
+          "url": "https://html.contact/docs/getting-started/"
+        },
+        "security": [
+          {
+            "bearerApiKey": []
+          }
+        ],
+        "x-required-scopes": [
+          "forms:create"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateFormRequest"
+              },
+              "examples": {
+                "createForm": {
+                  "summary": "Create form",
+                  "value": {
+                    "name": "Website contact",
+                    "recipientEmail": "owner@example.com",
+                    "ccEmail": "ops@example.com",
+                    "allowedDomain": "example.com",
+                    "defaultSubject": "New website inquiry",
+                    "defaultIntro": "A new message arrived from your website.",
+                    "defaultRedirectUrl": "https://example.com/thanks",
+                    "emailNotificationsEnabled": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Form created.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormResponse"
+                },
+                "examples": {
+                  "success": {
+                    "summary": "Created form",
+                    "value": {
+                      "ok": true,
+                      "form": {
+                        "id": "form_REPLACE",
+                        "publicKey": "hc_pub_abcdefghijklmnopqrstuvwxyzABCDEFGHIJ",
+                        "name": "Website contact",
+                        "status": "active",
+                        "recipientEmail": "owner@example.com",
+                        "recipientVerifiedAt": "2026-06-15T18:04:12.000Z",
+                        "allowedDomains": [
+                          "example.com",
+                          "www.example.com"
+                        ],
+                        "defaultSubject": "New website inquiry",
+                        "defaultIntro": "A new message arrived from your website.",
+                        "defaultRedirectUrl": "https://example.com/thanks",
+                        "emailNotificationsEnabled": true,
+                        "honeypotField": "_gotcha",
+                        "allowDirectPosts": false,
+                        "lifetimeSubmissionLimit": 250,
+                        "lifetimeSubmissionCount": 7,
+                        "createdAt": "2026-06-15T17:50:30.000Z",
+                        "updatedAt": "2026-06-15T18:04:12.000Z",
+                        "formRecipients": [
+                          {
+                            "email": "owner@example.com",
+                            "role": "to",
+                            "verificationStatus": "verified",
+                            "deliverabilityStatus": "ok",
+                            "verifiedAt": "2026-06-15T18:04:12.000Z"
+                          },
+                          {
+                            "email": "ops@example.com",
+                            "role": "cc",
+                            "verificationStatus": "verified",
+                            "deliverabilityStatus": "ok",
+                            "verifiedAt": "2026-06-15T18:05:12.000Z"
+                          }
+                        ],
+                        "snippet": "<form action=\"https://html.contact/f/hc_pub_abcdefghijklmnopqrstuvwxyzABCDEFGHIJ\" method=\"POST\">\n  <input name=\"name\" required>\n  <input name=\"email\" type=\"email\" required>\n  <textarea name=\"message\" required></textarea>\n  <button type=\"submit\">Send</button>\n</form>"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/api/v1/forms/{formId}": {
+      "get": {
+        "tags": [
+          "Forms"
+        ],
+        "operationId": "getForm",
+        "summary": "Get form",
+        "description": "Returns one form owned by the authenticated actor.",
+        "security": [
+          {
+            "bearerApiKey": []
+          }
+        ],
+        "x-required-scopes": [
+          "forms:read"
+        ],
+        "parameters": [
+          {
+            "name": "formId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "example": "form_REPLACE",
+            "description": "Form identifier returned by the Forms API. Replace the example value with a form ID from your account."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Form detail.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormResponse"
+                },
+                "examples": {
+                  "success": {
+                    "summary": "Form detail",
+                    "value": {
+                      "ok": true,
+                      "form": {
+                        "id": "form_REPLACE",
+                        "publicKey": "hc_pub_abcdefghijklmnopqrstuvwxyzABCDEFGHIJ",
+                        "name": "Website contact",
+                        "status": "active",
+                        "recipientEmail": "owner@example.com",
+                        "recipientVerifiedAt": "2026-06-15T18:04:12.000Z",
+                        "allowedDomains": [
+                          "example.com",
+                          "www.example.com"
+                        ],
+                        "defaultSubject": "New website inquiry",
+                        "defaultIntro": "A new message arrived from your website.",
+                        "defaultRedirectUrl": "https://example.com/thanks",
+                        "emailNotificationsEnabled": true,
+                        "honeypotField": "_gotcha",
+                        "allowDirectPosts": false,
+                        "lifetimeSubmissionLimit": 250,
+                        "lifetimeSubmissionCount": 7,
+                        "createdAt": "2026-06-15T17:50:30.000Z",
+                        "updatedAt": "2026-06-15T18:04:12.000Z",
+                        "formRecipients": [
+                          {
+                            "email": "owner@example.com",
+                            "role": "to",
+                            "verificationStatus": "verified",
+                            "deliverabilityStatus": "ok",
+                            "verifiedAt": "2026-06-15T18:04:12.000Z"
+                          },
+                          {
+                            "email": "ops@example.com",
+                            "role": "cc",
+                            "verificationStatus": "verified",
+                            "deliverabilityStatus": "ok",
+                            "verifiedAt": "2026-06-15T18:05:12.000Z"
+                          }
+                        ],
+                        "snippet": "<form action=\"https://html.contact/f/hc_pub_abcdefghijklmnopqrstuvwxyzABCDEFGHIJ\" method=\"POST\">\n  <input name=\"name\" required>\n  <input name=\"email\" type=\"email\" required>\n  <textarea name=\"message\" required></textarea>\n  <button type=\"submit\">Send</button>\n</form>"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Forms"
+        ],
+        "operationId": "updateForm",
+        "summary": "Update form",
+        "description": "Updates form settings such as name, recipients, allowed domains, defaults, direct-post behavior, and active/paused/disabled status. Requires form-manager permissions.",
+        "security": [
+          {
+            "bearerApiKey": []
+          }
+        ],
+        "x-required-scopes": [
+          "forms:update"
+        ],
+        "parameters": [
+          {
+            "name": "formId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "example": "form_REPLACE",
+            "description": "Form identifier returned by the Forms API. Replace the example value with a form ID from your account."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateFormRequest"
+              },
+              "examples": {
+                "updateDomains": {
+                  "summary": "Update allowed domains",
+                  "value": {
+                    "allowedDomains": [
+                      "example.com",
+                      "www.example.com"
+                    ],
+                    "allowDirectPosts": false,
+                    "emailNotificationsEnabled": true
+                  }
+                },
+                "pauseForm": {
+                  "summary": "Pause form",
+                  "value": {
+                    "status": "paused"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Form updated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormResponse"
+                },
+                "examples": {
+                  "success": {
+                    "summary": "Updated form",
+                    "value": {
+                      "ok": true,
+                      "form": {
+                        "id": "form_REPLACE",
+                        "publicKey": "hc_pub_abcdefghijklmnopqrstuvwxyzABCDEFGHIJ",
+                        "name": "Main contact form",
+                        "status": "active",
+                        "recipientEmail": "owner@example.com",
+                        "recipientVerifiedAt": "2026-06-15T18:04:12.000Z",
+                        "allowedDomains": [
+                          "example.com",
+                          "www.example.com"
+                        ],
+                        "defaultSubject": "New website inquiry",
+                        "defaultIntro": "A new message arrived from your website.",
+                        "defaultRedirectUrl": "https://example.com/thanks",
+                        "emailNotificationsEnabled": true,
+                        "honeypotField": "_gotcha",
+                        "allowDirectPosts": false,
+                        "lifetimeSubmissionLimit": 250,
+                        "lifetimeSubmissionCount": 7,
+                        "createdAt": "2026-06-15T17:50:30.000Z",
+                        "updatedAt": "2026-06-15T18:04:12.000Z",
+                        "formRecipients": [
+                          {
+                            "email": "owner@example.com",
+                            "role": "to",
+                            "verificationStatus": "verified",
+                            "deliverabilityStatus": "ok",
+                            "verifiedAt": "2026-06-15T18:04:12.000Z"
+                          },
+                          {
+                            "email": "ops@example.com",
+                            "role": "cc",
+                            "verificationStatus": "verified",
+                            "deliverabilityStatus": "ok",
+                            "verifiedAt": "2026-06-15T18:05:12.000Z"
+                          }
+                        ],
+                        "snippet": "<form action=\"https://html.contact/f/hc_pub_abcdefghijklmnopqrstuvwxyzABCDEFGHIJ\" method=\"POST\">\n  <input name=\"name\" required>\n  <input name=\"email\" type=\"email\" required>\n  <textarea name=\"message\" required></textarea>\n  <button type=\"submit\">Send</button>\n</form>"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/api/v1/forms/{formId}/duplicate": {
+      "post": {
+        "tags": [
+          "Forms"
+        ],
+        "operationId": "duplicateForm",
+        "summary": "Duplicate form",
+        "description": "Duplicates one form owned by the authenticated actor, including recipient roles, allowed domains, defaults, and generated snippet. Requires form-manager permissions.",
+        "security": [
+          {
+            "bearerApiKey": []
+          }
+        ],
+        "x-required-scopes": [
+          "forms:create"
+        ],
+        "parameters": [
+          {
+            "name": "formId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "example": "form_REPLACE",
+            "description": "Form identifier returned by the Forms API. Replace the example value with a form ID from your account."
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DuplicateFormRequest"
+              },
+              "examples": {
+                "defaultName": {
+                  "summary": "Use default copy name",
+                  "value": {}
+                },
+                "customName": {
+                  "summary": "Custom copy name",
+                  "value": {
+                    "name": "Website contact backup"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Form duplicated.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FormResponse"
+                },
+                "examples": {
+                  "success": {
+                    "summary": "Duplicated form",
+                    "value": {
+                      "ok": true,
+                      "form": {
+                        "id": "form_01JZ8M8D4Y2T7W9Q6K3N5P1R0S",
+                        "publicKey": "hc_pub_0123456789abcdefghijklmnopqrstuvwxyz",
+                        "name": "Website contact copy",
+                        "status": "active",
+                        "recipientEmail": "owner@example.com",
+                        "recipientVerifiedAt": "2026-06-15T18:04:12.000Z",
+                        "allowedDomains": [
+                          "example.com",
+                          "www.example.com"
+                        ],
+                        "defaultSubject": "New website inquiry",
+                        "defaultIntro": "A new message arrived from your website.",
+                        "defaultRedirectUrl": "https://example.com/thanks",
+                        "emailNotificationsEnabled": true,
+                        "honeypotField": "_gotcha",
+                        "allowDirectPosts": false,
+                        "lifetimeSubmissionLimit": 250,
+                        "lifetimeSubmissionCount": 0,
+                        "createdAt": "2026-06-15T17:50:30.000Z",
+                        "updatedAt": "2026-06-15T18:04:12.000Z",
+                        "formRecipients": [
+                          {
+                            "email": "owner@example.com",
+                            "role": "to",
+                            "verificationStatus": "verified",
+                            "deliverabilityStatus": "ok",
+                            "verifiedAt": "2026-06-15T18:04:12.000Z"
+                          },
+                          {
+                            "email": "ops@example.com",
+                            "role": "cc",
+                            "verificationStatus": "verified",
+                            "deliverabilityStatus": "ok",
+                            "verifiedAt": "2026-06-15T18:05:12.000Z"
+                          }
+                        ],
+                        "snippet": "<form action=\"https://html.contact/f/hc_pub_abcdefghijklmnopqrstuvwxyzABCDEFGHIJ\" method=\"POST\">\n  <input name=\"name\" required>\n  <input name=\"email\" type=\"email\" required>\n  <textarea name=\"message\" required></textarea>\n  <button type=\"submit\">Send</button>\n</form>"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/api/v1/forms/{formId}/test-email": {
+      "post": {
+        "tags": [
+          "Forms"
+        ],
+        "operationId": "sendFormTestEmail",
+        "summary": "Send test email",
+        "description": "Sends a test notification to the form's verified To recipient and any verified, healthy CC/BCC recipients. Requires form-manager permissions.",
+        "security": [
+          {
+            "bearerApiKey": []
+          }
+        ],
+        "x-required-scopes": [
+          "forms:update"
+        ],
+        "parameters": [
+          {
+            "name": "formId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "example": "form_REPLACE",
+            "description": "Form identifier returned by the Forms API. Replace the example value with a form ID from your account."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Test email attempted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TestEmailResponse"
+                },
+                "examples": {
+                  "success": {
+                    "summary": "Test email accepted",
+                    "value": {
+                      "ok": true,
+                      "email_id": "email_REPLACE",
+                      "result": {
+                        "status": "provider_accepted",
+                        "provider": "cloudflare",
+                        "providerMessageId": "msg_REPLACE"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Recipient is not verified or is suppressed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "recipientUnverified": {
+                    "summary": "Recipient unverified",
+                    "value": {
+                      "ok": false,
+                      "error": {
+                        "code": "recipient_unverified",
+                        "message": "Verify the recipient before sending a test email."
+                      }
+                    }
+                  },
+                  "recipientSuppressed": {
+                    "summary": "Recipient suppressed",
+                    "value": {
+                      "ok": false,
+                      "error": {
+                        "code": "recipient_suppressed",
+                        "message": "This recipient is suppressed after a delivery failure."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/api/v1/forms/{formId}/verify-recipient": {
+      "post": {
+        "tags": [
+          "Forms"
+        ],
+        "operationId": "sendFormRecipientVerification",
+        "summary": "Send recipient verification email",
+        "description": "Sends or resends the form recipient verification email. Already verified recipients return without sending email. Requires form-manager permissions.",
+        "security": [
+          {
+            "bearerApiKey": []
+          }
+        ],
+        "x-required-scopes": [
+          "forms:update"
+        ],
+        "parameters": [
+          {
+            "name": "formId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "example": "form_REPLACE",
+            "description": "Form identifier returned by the Forms API. Replace the example value with a form ID from your account."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Recipient verification state.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecipientVerificationResponse"
+                },
+                "examples": {
+                  "pending": {
+                    "summary": "Verification sent",
+                    "value": {
+                      "ok": true,
+                      "verification_status": "pending",
+                      "email_status": "provider_accepted",
+                      "retry_after_seconds": 30
+                    }
+                  },
+                  "verified": {
+                    "summary": "Already verified",
+                    "value": {
+                      "ok": true,
+                      "verification_status": "verified",
+                      "email_status": "not_attempted"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/RecipientVerificationRateLimited"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/api/v1/usage": {
+      "get": {
+        "tags": [
+          "Usage"
+        ],
+        "operationId": "getUsageSummary",
+        "summary": "Get usage summary",
+        "description": "Returns safe submission usage counters so API clients can warn users before an account reaches its limit. This route does not expose payment records, account-management URLs, or billing mutation actions.",
+        "security": [
+          {
+            "bearerApiKey": []
+          }
+        ],
+        "x-required-scopes": [
+          "forms:read"
+        ],
+        "responses": {
+          "200": {
+            "description": "Safe usage summary.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsageResponse"
+                },
+                "examples": {
+                  "starter": {
+                    "summary": "Starter usage",
+                    "value": {
+                      "ok": true,
+                      "usage": {
+                        "forms_count": 3,
+                        "submissions_count": 187,
+                        "used": 187,
+                        "limit": 1000,
+                        "plan": "starter",
+                        "plan_label": "Starter",
+                        "period_end": "2026-07-17T00:00:00.000Z",
+                        "is_over_limit": false
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/api/v1/forms/all/submissions": {
+      "get": {
+        "tags": [
+          "Submissions"
+        ],
+        "operationId": "listWorkspaceSubmissions",
+        "summary": "List workspace submissions",
+        "description": "Returns a paginated inbox, spam, or archived list across all forms owned by the authenticated actor.",
+        "externalDocs": {
+          "description": "API guide",
+          "url": "https://html.contact/docs/api/"
+        },
+        "security": [
+          {
+            "bearerApiKey": []
+          }
+        ],
+        "x-required-scopes": [
+          "submissions:read"
+        ],
+        "parameters": [
+          {
+            "name": "folder",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "inbox",
+                "spam",
+                "archived"
+              ],
+              "default": "inbox"
+            },
+            "description": "Filter to accepted inbox submissions, blocked/spam submissions, or archived submissions."
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 200
+            },
+            "description": "Search submitter email, submitter name, source host, and submitted field JSON.",
+            "example": "quote"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by stored submission status.",
+            "example": "accepted"
+          },
+          {
+            "name": "email_status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by email delivery status.",
+            "example": "provider_accepted"
+          },
+          {
+            "name": "source_host",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by normalized source host.",
+            "example": "example.com"
+          },
+          {
+            "name": "date_from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "description": "Return submissions created on or after this timestamp.",
+            "example": "2026-06-01T00:00:00.000Z"
+          },
+          {
+            "name": "date_to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "description": "Return submissions created on or before this timestamp.",
+            "example": "2026-06-30T23:59:59.999Z"
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Cursor returned as `next_cursor` from the previous page."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            },
+            "description": "Page size for JSON submission lists. Values above 100 are clamped."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Submission page.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmissionsListResponse"
+                },
+                "examples": {
+                  "inbox": {
+                    "summary": "Inbox submissions",
+                    "value": {
+                      "ok": true,
+                      "submissions": [
+                        {
+                          "id": "sub_REPLACE",
+                          "form_id": "form_REPLACE",
+                          "status": "accepted",
+                          "fields_json": "{\"name\":\"Mara Quill\",\"email\":\"mara@example.com\",\"subject\":\"Quote request\",\"message\":\"Can you send pricing for a five page site?\",\"attachment\":\"quote-request.pdf\"}",
+                          "fields_order_json": "[{\"name\":\"name\",\"value\":\"Mara Quill\",\"type\":\"text\"},{\"name\":\"email\",\"value\":\"mara@example.com\",\"type\":\"text\"},{\"name\":\"subject\",\"value\":\"Quote request\",\"type\":\"text\"},{\"name\":\"message\",\"value\":\"Can you send pricing for a five page site?\",\"type\":\"text\"},{\"name\":\"attachment\",\"value\":\"quote-request.pdf\",\"type\":\"file\"}]",
+                          "system_fields_json": "{\"_redirect\":\"https://example.com/thanks\"}",
+                          "submitter_email": "mara@example.com",
+                          "submitter_name": "Mara Quill",
+                          "submitter_phone": null,
+                          "source_url": "https://example.com/contact",
+                          "source_host": "example.com",
+                          "source_allowed": 1,
+                          "spam_status": "passed",
+                          "blocked_reason": null,
+                          "email_status": "provider_accepted",
+                          "created_at": "2026-06-16T15:04:05.000Z",
+                          "cf_ip_country": "US",
+                          "cf_region": "Indiana",
+                          "cf_city": "Indianapolis",
+                          "origin_header": "https://example.com",
+                          "referer_header": "https://example.com/contact",
+                          "attachments_json": "[{\"id\":\"att_REPLACE\",\"submission_id\":\"sub_REPLACE\",\"form_id\":\"form_REPLACE\",\"field_name\":\"attachment\",\"filename\":\"quote-request.pdf\",\"content_type\":\"application/pdf\",\"byte_size\":188416,\"scan_status\":\"not_scanned\",\"created_at\":\"2026-06-16T15:04:08.000Z\"}]"
+                        }
+                      ],
+                      "next_cursor": "2026-06-16T15%3A04%3A05.000Z%0Asub_REPLACE",
+                      "counts": {
+                        "inbox": 18,
+                        "spam": 2,
+                        "archived": 4
+                      }
+                    }
+                  },
+                  "spam": {
+                    "summary": "Spam submissions",
+                    "value": {
+                      "ok": true,
+                      "submissions": [
+                        {
+                          "id": "sub_01JZ8M5Z3T8BV2X7R4W6N9K0QA",
+                          "form_id": "form_REPLACE",
+                          "status": "blocked",
+                          "fields_json": "{\"name\":\"Mara Quill\",\"email\":\"mara@example.com\",\"subject\":\"Quote request\",\"message\":\"Can you send pricing for a five page site?\",\"attachment\":\"quote-request.pdf\"}",
+                          "fields_order_json": "[{\"name\":\"name\",\"value\":\"Mara Quill\",\"type\":\"text\"},{\"name\":\"email\",\"value\":\"mara@example.com\",\"type\":\"text\"},{\"name\":\"subject\",\"value\":\"Quote request\",\"type\":\"text\"},{\"name\":\"message\",\"value\":\"Can you send pricing for a five page site?\",\"type\":\"text\"},{\"name\":\"attachment\",\"value\":\"quote-request.pdf\",\"type\":\"file\"}]",
+                          "system_fields_json": "{\"_redirect\":\"https://example.com/thanks\"}",
+                          "submitter_email": "mara@example.com",
+                          "submitter_name": "Mara Quill",
+                          "submitter_phone": null,
+                          "source_url": "https://evil.example/contact",
+                          "source_host": "evil.example",
+                          "source_allowed": 0,
+                          "spam_status": "blocked",
+                          "blocked_reason": "domain_not_allowed",
+                          "email_status": "not_attempted",
+                          "created_at": "2026-06-16T15:04:05.000Z",
+                          "cf_ip_country": "US",
+                          "cf_region": "Indiana",
+                          "cf_city": "Indianapolis",
+                          "origin_header": "https://example.com",
+                          "referer_header": "https://example.com/contact",
+                          "attachments_json": "[]"
+                        }
+                      ],
+                      "next_cursor": null,
+                      "counts": {
+                        "inbox": 18,
+                        "spam": 2,
+                        "archived": 4
+                      }
+                    }
+                  },
+                  "archived": {
+                    "summary": "Archived submissions",
+                    "value": {
+                      "ok": true,
+                      "submissions": [
+                        {
+                          "id": "sub_REPLACE",
+                          "form_id": "form_REPLACE",
+                          "status": "accepted",
+                          "fields_json": "{\"name\":\"Mara Quill\",\"email\":\"mara@example.com\",\"subject\":\"Quote request\",\"message\":\"Can you send pricing for a five page site?\",\"attachment\":\"quote-request.pdf\"}",
+                          "fields_order_json": "[{\"name\":\"name\",\"value\":\"Mara Quill\",\"type\":\"text\"},{\"name\":\"email\",\"value\":\"mara@example.com\",\"type\":\"text\"},{\"name\":\"subject\",\"value\":\"Quote request\",\"type\":\"text\"},{\"name\":\"message\",\"value\":\"Can you send pricing for a five page site?\",\"type\":\"text\"},{\"name\":\"attachment\",\"value\":\"quote-request.pdf\",\"type\":\"file\"}]",
+                          "system_fields_json": "{\"_redirect\":\"https://example.com/thanks\"}",
+                          "submitter_email": "mara@example.com",
+                          "submitter_name": "Mara Quill",
+                          "submitter_phone": null,
+                          "source_url": "https://example.com/contact",
+                          "source_host": "example.com",
+                          "source_allowed": 1,
+                          "spam_status": "passed",
+                          "blocked_reason": null,
+                          "email_status": "provider_accepted",
+                          "created_at": "2026-06-16T15:04:05.000Z",
+                          "cf_ip_country": "US",
+                          "cf_region": "Indiana",
+                          "cf_city": "Indianapolis",
+                          "origin_header": "https://example.com",
+                          "referer_header": "https://example.com/contact",
+                          "attachments_json": "[{\"id\":\"att_REPLACE\",\"submission_id\":\"sub_REPLACE\",\"form_id\":\"form_REPLACE\",\"field_name\":\"attachment\",\"filename\":\"quote-request.pdf\",\"content_type\":\"application/pdf\",\"byte_size\":188416,\"scan_status\":\"not_scanned\",\"created_at\":\"2026-06-16T15:04:08.000Z\"}]"
+                        }
+                      ],
+                      "next_cursor": null,
+                      "counts": {
+                        "inbox": 18,
+                        "spam": 2,
+                        "archived": 4
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/api/v1/forms/{formId}/submissions": {
+      "get": {
+        "tags": [
+          "Submissions"
+        ],
+        "operationId": "listFormSubmissions",
+        "summary": "List form submissions",
+        "description": "Returns a paginated inbox, spam, or archived list for one form owned by the authenticated actor.",
+        "security": [
+          {
+            "bearerApiKey": []
+          }
+        ],
+        "x-required-scopes": [
+          "submissions:read"
+        ],
+        "parameters": [
+          {
+            "name": "formId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "example": "form_REPLACE",
+            "description": "Form identifier returned by the Forms API. Replace the example value with a form ID from your account."
+          },
+          {
+            "name": "folder",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "inbox",
+                "spam",
+                "archived"
+              ],
+              "default": "inbox"
+            },
+            "description": "Filter to accepted inbox submissions, blocked/spam submissions, or archived submissions."
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 200
+            },
+            "description": "Search submitter email, submitter name, source host, and submitted field JSON.",
+            "example": "quote"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by stored submission status.",
+            "example": "accepted"
+          },
+          {
+            "name": "email_status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by email delivery status.",
+            "example": "provider_accepted"
+          },
+          {
+            "name": "source_host",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by normalized source host.",
+            "example": "example.com"
+          },
+          {
+            "name": "date_from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "description": "Return submissions created on or after this timestamp.",
+            "example": "2026-06-01T00:00:00.000Z"
+          },
+          {
+            "name": "date_to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "description": "Return submissions created on or before this timestamp.",
+            "example": "2026-06-30T23:59:59.999Z"
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Cursor returned as `next_cursor` from the previous page."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            },
+            "description": "Page size for JSON submission lists. Values above 100 are clamped."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Submission page.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmissionsListResponse"
+                },
+                "examples": {
+                  "success": {
+                    "summary": "Form submissions",
+                    "value": {
+                      "ok": true,
+                      "submissions": [
+                        {
+                          "id": "sub_REPLACE",
+                          "form_id": "form_REPLACE",
+                          "status": "accepted",
+                          "fields_json": "{\"name\":\"Mara Quill\",\"email\":\"mara@example.com\",\"subject\":\"Quote request\",\"message\":\"Can you send pricing for a five page site?\",\"attachment\":\"quote-request.pdf\"}",
+                          "fields_order_json": "[{\"name\":\"name\",\"value\":\"Mara Quill\",\"type\":\"text\"},{\"name\":\"email\",\"value\":\"mara@example.com\",\"type\":\"text\"},{\"name\":\"subject\",\"value\":\"Quote request\",\"type\":\"text\"},{\"name\":\"message\",\"value\":\"Can you send pricing for a five page site?\",\"type\":\"text\"},{\"name\":\"attachment\",\"value\":\"quote-request.pdf\",\"type\":\"file\"}]",
+                          "system_fields_json": "{\"_redirect\":\"https://example.com/thanks\"}",
+                          "submitter_email": "mara@example.com",
+                          "submitter_name": "Mara Quill",
+                          "submitter_phone": null,
+                          "source_url": "https://example.com/contact",
+                          "source_host": "example.com",
+                          "source_allowed": 1,
+                          "spam_status": "passed",
+                          "blocked_reason": null,
+                          "email_status": "provider_accepted",
+                          "created_at": "2026-06-16T15:04:05.000Z",
+                          "cf_ip_country": "US",
+                          "cf_region": "Indiana",
+                          "cf_city": "Indianapolis",
+                          "origin_header": "https://example.com",
+                          "referer_header": "https://example.com/contact",
+                          "attachments_json": "[{\"id\":\"att_REPLACE\",\"submission_id\":\"sub_REPLACE\",\"form_id\":\"form_REPLACE\",\"field_name\":\"attachment\",\"filename\":\"quote-request.pdf\",\"content_type\":\"application/pdf\",\"byte_size\":188416,\"scan_status\":\"not_scanned\",\"created_at\":\"2026-06-16T15:04:08.000Z\"}]"
+                        }
+                      ],
+                      "next_cursor": null,
+                      "counts": {
+                        "inbox": 7,
+                        "spam": 1,
+                        "archived": 2
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/api/v1/forms/all/submissions.csv": {
+      "get": {
+        "tags": [
+          "Submissions"
+        ],
+        "operationId": "exportWorkspaceSubmissionsCsv",
+        "summary": "Export workspace submissions as CSV",
+        "description": "Exports filtered submissions across all forms as CSV. Attachment columns contain authenticated download links, never private storage identifiers or file bytes.",
+        "security": [
+          {
+            "bearerApiKey": []
+          }
+        ],
+        "x-required-scopes": [
+          "submissions:read"
+        ],
+        "parameters": [
+          {
+            "name": "folder",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "inbox",
+                "spam",
+                "archived"
+              ],
+              "default": "inbox"
+            },
+            "description": "Filter to accepted inbox submissions, blocked/spam submissions, or archived submissions."
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 200
+            },
+            "description": "Search submitter email, submitter name, source host, and submitted field JSON.",
+            "example": "quote"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by stored submission status.",
+            "example": "accepted"
+          },
+          {
+            "name": "email_status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by email delivery status.",
+            "example": "provider_accepted"
+          },
+          {
+            "name": "source_host",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by normalized source host.",
+            "example": "example.com"
+          },
+          {
+            "name": "date_from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "description": "Return submissions created on or after this timestamp.",
+            "example": "2026-06-01T00:00:00.000Z"
+          },
+          {
+            "name": "date_to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "description": "Return submissions created on or before this timestamp.",
+            "example": "2026-06-30T23:59:59.999Z"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Comma-separated submission IDs to export. Invalid IDs are ignored.",
+            "example": "sub_REPLACE,sub_01JZ8M5Z3T8BV2X7R4W6N9K0QA"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 5000,
+              "default": 5000
+            },
+            "description": "Maximum rows to include in the CSV export. Values above 5000 are clamped."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "CSV export.",
+            "headers": {
+              "Content-Disposition": {
+                "description": "Attachment filename for the export.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Cache-Control": {
+                "description": "Private API responses are not cached.",
+                "schema": {
+                  "type": "string",
+                  "example": "no-store"
+                }
+              }
+            },
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                },
+                "examples": {
+                  "basic": {
+                    "summary": "CSV export",
+                    "value": "Submitted At,Name,Email,Subject,Message,Location,Attachment Count,Attachment Filenames,Attachment Sizes,Attachment Download Links\n2026-06-16T15:04:05.000Z,Mara Quill,mara@example.com,Quote request,Can you send pricing for a five page site?,\"Indianapolis, Indiana, US\",1,quote-request.pdf,184 KB,https://html.contact/api/v1/submissions/sub_REPLACE/attachments/att_REPLACE\n"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/api/v1/forms/{formId}/submissions.csv": {
+      "get": {
+        "tags": [
+          "Submissions"
+        ],
+        "operationId": "exportFormSubmissionsCsv",
+        "summary": "Export form submissions as CSV",
+        "description": "Exports filtered submissions for one form as CSV. Use `folder=spam` to include source and rejected-reason columns for blocked rows. Use `folder=archived` for archived rows.",
+        "security": [
+          {
+            "bearerApiKey": []
+          }
+        ],
+        "x-required-scopes": [
+          "submissions:read"
+        ],
+        "parameters": [
+          {
+            "name": "formId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "example": "form_REPLACE",
+            "description": "Form identifier returned by the Forms API. Replace the example value with a form ID from your account."
+          },
+          {
+            "name": "folder",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "inbox",
+                "spam",
+                "archived"
+              ],
+              "default": "inbox"
+            },
+            "description": "Filter to accepted inbox submissions, blocked/spam submissions, or archived submissions."
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 200
+            },
+            "description": "Search submitter email, submitter name, source host, and submitted field JSON.",
+            "example": "quote"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by stored submission status.",
+            "example": "accepted"
+          },
+          {
+            "name": "email_status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by email delivery status.",
+            "example": "provider_accepted"
+          },
+          {
+            "name": "source_host",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by normalized source host.",
+            "example": "example.com"
+          },
+          {
+            "name": "date_from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "description": "Return submissions created on or after this timestamp.",
+            "example": "2026-06-01T00:00:00.000Z"
+          },
+          {
+            "name": "date_to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "description": "Return submissions created on or before this timestamp.",
+            "example": "2026-06-30T23:59:59.999Z"
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Comma-separated submission IDs to export. Invalid IDs are ignored.",
+            "example": "sub_REPLACE,sub_01JZ8M5Z3T8BV2X7R4W6N9K0QA"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 5000,
+              "default": 5000
+            },
+            "description": "Maximum rows to include in the CSV export. Values above 5000 are clamped."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "CSV export.",
+            "headers": {
+              "Content-Disposition": {
+                "description": "Attachment filename for the export.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Cache-Control": {
+                "description": "Private API responses are not cached.",
+                "schema": {
+                  "type": "string",
+                  "example": "no-store"
+                }
+              }
+            },
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                },
+                "examples": {
+                  "spam": {
+                    "summary": "Spam CSV export",
+                    "value": "Submitted At,Name,Email,Message,Source,Rejected Because,Location,Attachment Count,Attachment Filenames,Attachment Sizes,Attachment Download Links\n2026-06-16T15:05:05.000Z,Mara Quill,mara@example.com,Automated spam test,evil.example,Domain not allowed,,0,,,\n"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/api/v1/submissions/{submissionId}": {
+      "get": {
+        "tags": [
+          "Submissions"
+        ],
+        "operationId": "getSubmission",
+        "summary": "Get submission detail",
+        "description": "Returns one submission owned by the authenticated actor. Detail responses include `events_json` and attachment metadata.",
+        "security": [
+          {
+            "bearerApiKey": []
+          }
+        ],
+        "x-required-scopes": [
+          "submissions:read"
+        ],
+        "parameters": [
+          {
+            "name": "submissionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^sub_[A-Za-z0-9_-]+$"
+            },
+            "example": "sub_REPLACE",
+            "description": "Submission identifier returned by a submission list or detail response. Replace the example value with a submission ID from your account."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Submission detail.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmissionDetailResponse"
+                },
+                "examples": {
+                  "success": {
+                    "summary": "Submission detail",
+                    "value": {
+                      "ok": true,
+                      "submission": {
+                        "id": "sub_REPLACE",
+                        "form_id": "form_REPLACE",
+                        "status": "accepted",
+                        "fields_json": "{\"name\":\"Mara Quill\",\"email\":\"mara@example.com\",\"subject\":\"Quote request\",\"message\":\"Can you send pricing for a five page site?\",\"attachment\":\"quote-request.pdf\"}",
+                        "fields_order_json": "[{\"name\":\"name\",\"value\":\"Mara Quill\",\"type\":\"text\"},{\"name\":\"email\",\"value\":\"mara@example.com\",\"type\":\"text\"},{\"name\":\"subject\",\"value\":\"Quote request\",\"type\":\"text\"},{\"name\":\"message\",\"value\":\"Can you send pricing for a five page site?\",\"type\":\"text\"},{\"name\":\"attachment\",\"value\":\"quote-request.pdf\",\"type\":\"file\"}]",
+                        "system_fields_json": "{\"_redirect\":\"https://example.com/thanks\"}",
+                        "submitter_email": "mara@example.com",
+                        "submitter_name": "Mara Quill",
+                        "submitter_phone": null,
+                        "source_url": "https://example.com/contact",
+                        "source_host": "example.com",
+                        "source_allowed": 1,
+                        "spam_status": "passed",
+                        "blocked_reason": null,
+                        "email_status": "provider_accepted",
+                        "created_at": "2026-06-16T15:04:05.000Z",
+                        "cf_ip_country": "US",
+                        "cf_region": "Indiana",
+                        "cf_city": "Indianapolis",
+                        "origin_header": "https://example.com",
+                        "referer_header": "https://example.com/contact",
+                        "attachments_json": "[{\"id\":\"att_REPLACE\",\"submission_id\":\"sub_REPLACE\",\"form_id\":\"form_REPLACE\",\"field_name\":\"attachment\",\"filename\":\"quote-request.pdf\",\"content_type\":\"application/pdf\",\"byte_size\":188416,\"scan_status\":\"not_scanned\",\"created_at\":\"2026-06-16T15:04:08.000Z\"}]",
+                        "events_json": "[{\"event_type\":\"submission_stored\",\"message\":\"Submission stored.\",\"payload_json\":null,\"created_at\":\"2026-06-16T15:04:05.000Z\"}]"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "description": "Submission not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "submissionNotFound": {
+                    "summary": "Submission not found",
+                    "value": {
+                      "ok": false,
+                      "error": {
+                        "code": "submission_not_found",
+                        "message": "Submission not found."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/api/v1/submissions/{submissionId}/attachments/{attachmentId}": {
+      "get": {
+        "tags": [
+          "Attachments"
+        ],
+        "operationId": "downloadSubmissionAttachment",
+        "summary": "Download or preview attachment",
+        "description": "Downloads a private attachment after verifying that the authenticated actor owns the submission. `disposition=inline` previews safe file types with a sandbox content security policy.",
+        "externalDocs": {
+          "description": "Attachments guide",
+          "url": "https://html.contact/docs/attachments/"
+        },
+        "security": [
+          {
+            "bearerApiKey": []
+          }
+        ],
+        "x-required-scopes": [
+          "submissions:read"
+        ],
+        "parameters": [
+          {
+            "name": "submissionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^sub_[A-Za-z0-9_-]+$"
+            },
+            "example": "sub_REPLACE",
+            "description": "Submission identifier returned by a submission list or detail response. Replace the example value with a submission ID from your account."
+          },
+          {
+            "name": "attachmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "example": "att_REPLACE",
+            "description": "Attachment identifier from the submission detail response. Replace the example value with an attachment ID from that submission."
+          },
+          {
+            "name": "disposition",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "inline"
+              ]
+            },
+            "description": "Use `inline` to request sandboxed preview for safe previewable file types. Other files still download."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Attachment stream. The response `Content-Type` is the stored attachment content type, with `application/octet-stream` as a fallback.",
+            "headers": {
+              "Content-Disposition": {
+                "description": "`attachment` by default, or `inline` when requested and safe.",
+                "schema": {
+                  "type": "string",
+                  "example": "attachment; filename=\"quote-request.pdf\""
+                }
+              },
+              "X-Content-Type-Options": {
+                "description": "Always set to prevent MIME sniffing.",
+                "schema": {
+                  "type": "string",
+                  "example": "nosniff"
+                }
+              },
+              "Content-Security-Policy": {
+                "description": "Set to `sandbox` for inline previews.",
+                "schema": {
+                  "type": "string",
+                  "example": "sandbox"
+                }
+              },
+              "Cache-Control": {
+                "description": "Private short-lived attachment cache policy.",
+                "schema": {
+                  "type": "string",
+                  "example": "private, max-age=60"
+                }
+              }
+            },
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                },
+                "examples": {
+                  "pdf": {
+                    "summary": "PDF attachment bytes",
+                    "value": "<binary PDF bytes>"
+                  }
+                }
+              },
+              "image/png": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                },
+                "examples": {
+                  "png": {
+                    "summary": "PNG attachment bytes",
+                    "value": "<binary PNG bytes>"
+                  }
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                },
+                "examples": {
+                  "text": {
+                    "summary": "Text attachment",
+                    "value": "Plain text attachment body"
+                  }
+                }
+              },
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                },
+                "examples": {
+                  "binary": {
+                    "summary": "Binary attachment bytes",
+                    "value": "<binary file bytes>"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "description": "Attachment not found.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "attachmentNotFound": {
+                    "summary": "Attachment not found",
+                    "value": {
+                      "ok": false,
+                      "error": {
+                        "code": "attachment_not_found",
+                        "message": "Attachment not found."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Attachment storage unavailable.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "attachmentStorageUnavailable": {
+                    "summary": "Attachment storage unavailable",
+                    "value": {
+                      "ok": false,
+                      "error": {
+                        "code": "attachment_storage_unavailable",
+                        "message": "Attachment storage is not configured."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,200 @@
+# html.contact Full Agent Context
+
+This file is for coding agents, AI website builders, and answer engines that need a fuller implementation map for html.contact. For exact API endpoint contracts, use https://html.contact/openapi.json as the source of truth.
+
+## Product definition
+
+html.contact is a form backend for static sites, AI-built sites, website builders, and plain HTML forms. A site posts a normal HTML form to a public html.contact endpoint. html.contact handles email delivery, recipient settings, source-domain checks, spam screening, submission logs, CSV and JSON exports, one-file attachments, and private API access.
+
+## What html.contact is good for
+
+- Static marketing sites that need a contact form.
+- AI-generated websites that should not ship a custom backend just for email.
+- Plain HTML pages that need form submissions in email and logs.
+- Astro, Next.js, React, Vue, Webflow, and similar frontend or static-site workflows.
+- Client sites where the owner wants To/CC/BCC routing, verified linked emails, domain allowlists, logs, exports, attachments, and API access from the beginning.
+
+## What to avoid by default
+
+- Do not create a custom backend route unless the user specifically needs server-side validation, custom business logic, or trusted server-side posting.
+- Do not put private hc_live_ API keys in frontend code.
+- Do not use JSON request bodies for public browser form submissions.
+- Do not control recipients with hidden public fields.
+- Do not make attachments the default when the user only asked for a normal contact form.
+
+## Pricing and packaging
+
+Pricing is based on accepted submission volume. The core setup is not feature-gated.
+
+- Free: $0 to start, no credit card, 250 lifetime accepted submissions.
+- Starter: $8/month, 1,000 accepted submissions per month.
+- Pro: $19/month, 5,000 accepted submissions per month.
+- Included from the start: plain HTML endpoint, unlimited forms, attachments, To/CC/BCC recipients, verified linked emails, domain allowlists, spam screening, submission logs, CSV and JSON exports, public form submissions, and API access.
+- One accepted submission counts once even when it emails To, CC, and BCC.
+- Spam and rejected submissions do not burn normal accepted submission volume.
+
+## Canonical setup path for agents
+
+1. Ask for the user's html.contact public form key or full action URL.
+2. Use the public endpoint https://html.contact/f/hc_pub_REPLACE in the form action.
+3. Use method="POST".
+4. Add label elements and name attributes for every collected field.
+5. Use the production contact form pattern for real pages.
+6. Add multipart/form-data only when a file input is present.
+7. Add custom named fields freely when the user needs more intake data.
+8. Tell the user to add the deployed source domain in html.contact before testing.
+9. Keep all private API work server-side.
+
+## Smallest working HTML form
+
+```html
+<form action="https://html.contact/f/hc_pub_REPLACE" method="POST">
+  <label for="name">Name</label>
+  <input id="name" name="name" autocomplete="name" required>
+
+  <label for="email">Email</label>
+  <input id="email" name="email" type="email" autocomplete="email" required>
+
+  <label for="message">Message</label>
+  <textarea id="message" name="message" required></textarea>
+
+  <button type="submit">Send</button>
+</form>
+```
+
+Use this when the user asks for the smallest possible working example or is learning the basic integration.
+
+## Recommended production HTML form
+
+```html
+<form action="https://html.contact/f/hc_pub_REPLACE" method="POST">
+  <input type="hidden" name="_replyto" value="email">
+
+  <div style="position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden;" aria-hidden="true">
+    <label for="hc-company">Company</label>
+    <input id="hc-company" name="_hc_hp_company" type="text" tabindex="-1" autocomplete="off">
+  </div>
+
+  <label for="name">Name</label>
+  <input id="name" name="name" autocomplete="name" required>
+
+  <label for="email">Email</label>
+  <input id="email" name="email" type="email" autocomplete="email" required>
+
+  <label for="subject">Subject</label>
+  <input id="subject" name="subject" value="Website inquiry">
+
+  <label for="message">Message</label>
+  <textarea id="message" name="message" required></textarea>
+
+  <button type="submit">Send</button>
+</form>
+```
+
+Use this for normal contact pages unless the user asks for a minimal demo, an attachment form, custom JavaScript submission, or server-side validation.
+
+## Attachment form variant
+
+```html
+<form
+  action="https://html.contact/f/hc_pub_REPLACE"
+  method="POST"
+  enctype="multipart/form-data"
+>
+  <input type="hidden" name="_replyto" value="email">
+
+  <div style="position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden;" aria-hidden="true">
+    <label for="hc-company">Company</label>
+    <input id="hc-company" name="_hc_hp_company" type="text" tabindex="-1" autocomplete="off">
+  </div>
+
+  <label for="name">Name</label>
+  <input id="name" name="name" autocomplete="name" required>
+
+  <label for="email">Email</label>
+  <input id="email" name="email" type="email" autocomplete="email" required>
+
+  <label for="message">Message</label>
+  <textarea id="message" name="message" required></textarea>
+
+  <label for="attachment">Attachment</label>
+  <input id="attachment" name="attachment" type="file">
+
+  <button type="submit">Send</button>
+</form>
+```
+
+Use this only when the user needs file uploads. Browser forms with files use multipart/form-data. Current browser form support allows one non-empty attachment per submission.
+
+## Custom fields
+
+Any successful input with a name attribute can be collected. Agents may add fields such as company, phone, budget, project_type, message, preferred_date, or checkbox groups. These fields are preserved in submission data, API detail, exports, and notifications according to the product behavior documented on the site.
+
+## Recipient routing
+
+Recipients, CC, BCC, sender behavior, verified linked emails, default subject, default intro, redirect URL, allowed domains, and direct-post behavior are configured in html.contact or through the intended private form-management API.
+
+Public submitted fields named _to, _from, _cc, and _bcc are stored as submitted fields only. They do not route email.
+
+## Reply-to, subject, honeypot, and redirect
+
+- _replyto can be a literal email address or a field pointer such as email.
+- subject is a normal submitted field and can set the notification subject.
+- _hc_hp_* fields are honeypot fields. Real visitors should leave them empty. _gotcha is also supported for older snippets.
+- _redirect can redirect successful browser submissions. Use an absolute https:// URL, or http://localhost:* / http://127.0.0.1:* for local development.
+- _subject and _intro are stored fields and do not override notification behavior.
+
+## Public key and private API boundary
+
+- hc_pub_ keys are public form keys. They are safe in frontend HTML and can only submit to the associated form.
+- hc_live_ keys are private API keys. Keep them on trusted servers, backend jobs, local automation, or approved agent workflows.
+- Private API keys can be read-only or form-management scoped.
+- Private API keys cannot manage account profile, billing/payment methods, invoices, API keys, linked emails, or signed-in dashboard internals.
+
+## Testing and source rules
+
+Public browser form submissions are expected from allowed source domains. Test from the deployed domain that serves the form. Server-side posts, curl tests without browser source headers, or direct automation require the form's direct-submission behavior to be intentionally enabled or otherwise configured according to the docs.
+
+Source headers are abuse signals, not cryptographic proof that a request came from a website.
+
+## Common troubleshooting
+
+- Missing name attributes: fields without name attributes are not collected.
+- Wrong key: the public action URL should contain a public hc_pub_ key.
+- Private key exposed: remove hc_live_ from frontend code immediately.
+- Domain not allowed: add the deployed hostname in html.contact and test from that page.
+- Missing source headers: direct server or curl posts need the direct-post path/settings documented by html.contact.
+- Form inactive: reactivate the form in html.contact.
+- Recipient unverified: verify the linked recipient before expecting delivery.
+- Attachment problems: use multipart/form-data and one file input when uploading.
+- Usage limit reached: upgrade when accepted submission volume exceeds the current plan.
+
+## Public docs and machine-readable files
+
+- Homepage: https://html.contact/
+- Pricing: https://html.contact/pricing
+- Machine-readable pricing: https://html.contact/pricing.md
+- Docs: https://html.contact/docs
+- Examples index: https://html.contact/examples
+- Simple HTML form: https://html.contact/examples/simple-html-contact-form
+- Production HTML form: https://html.contact/examples/production-html-contact-form
+- Custom fields: https://html.contact/examples/custom-fields
+- Attachments: https://html.contact/examples/attachments
+- AI website builders: https://html.contact/examples/ai-website-builders
+- Server-side POST: https://html.contact/examples/http-post
+- HTML form docs: https://html.contact/docs/html-forms
+- Form fields: https://html.contact/docs/form-fields
+- Domains and spam: https://html.contact/docs/domains-and-spam
+- Error responses: https://html.contact/docs/error-responses
+- Troubleshooting: https://html.contact/docs/troubleshooting
+- API docs: https://html.contact/docs/api
+- API authentication: https://html.contact/docs/api/authentication
+- API examples: https://html.contact/docs/api/examples
+- OpenAPI: https://html.contact/openapi.json
+- Public agent guide: https://html.contact/agents.md
+- Short LLM summary: https://html.contact/llms.txt
+- Humans file: https://html.contact/humans.txt
+
+## Public vs signed-in areas
+
+Public docs, examples, llms.txt, llms-full.txt, agents.md, humans.txt, robots.txt, and openapi.json can be read by crawlers and agents. The https://html.contact/app area is for signed-in users and should not be treated as public API documentation.

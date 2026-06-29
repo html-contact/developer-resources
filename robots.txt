@@ -1,0 +1,27 @@
+# html.contact welcomes search crawlers, AI answer engines, and coding agents on public pages.
+# The signed-in dashboard is private and should not be indexed.
+# Agent-readable resources:
+# - https://html.contact/llms.txt
+# - https://html.contact/llms-full.txt
+# - https://html.contact/agents.md
+# - https://html.contact/pricing.md
+# - https://html.contact/openapi.json
+# - https://html.contact/humans.txt
+
+User-agent: GPTBot
+User-agent: ChatGPT-User
+User-agent: PerplexityBot
+User-agent: ClaudeBot
+User-agent: anthropic-ai
+User-agent: Google-Extended
+User-agent: Bingbot
+Allow: /
+Disallow: /app
+Disallow: /app/
+
+User-agent: *
+Allow: /
+Disallow: /app
+Disallow: /app/
+
+Sitemap: https://html.contact/sitemap-index.xml

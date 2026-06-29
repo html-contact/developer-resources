@@ -1,0 +1,15 @@
+html.contact
+Working form infrastructure for static websites, no-code pages, and AI-generated websites.
+
+Public docs: https://html.contact/docs
+HTML forms: https://html.contact/docs/html-forms
+Examples: https://html.contact/examples
+Pricing: https://html.contact/pricing
+Machine-readable pricing: https://html.contact/pricing.md
+API docs: https://html.contact/docs/api
+OpenAPI: https://html.contact/openapi.json
+Agent guide: https://html.contact/agents.md
+LLM summary: https://html.contact/llms.txt
+Full agent context: https://html.contact/llms-full.txt
+
+AI crawlers and coding agents are welcome on public pages. The signed-in /app area is private.

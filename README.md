@@ -4,7 +4,7 @@ Email for forms. No backend needed.
 
 html.contact turns a normal HTML form into email notifications, submission logs, spam screening, file attachments, CSV/JSON exports, and private API access. It is built for static sites, AI-built pages, no-code sites, client projects, and small production websites where a contact form should not become a backend project.
 
-This repository is the public developer-resource home for html.contact docs, examples, OpenAPI artifacts, and agent instructions. The html.contact application code remains the source of truth; this repo is where public, generated, and agent-readable resources can be published in a cleaner shape.
+This repository is the public developer-resource home for html.contact docs, examples, OpenAPI artifacts, and agent instructions. The html.contact application code remains the source of truth; this repo publishes public, generated, and agent-readable resources in a cleaner shape.
 
 ## Start Here
 
@@ -40,7 +40,7 @@ Public browser forms submit `application/x-www-form-urlencoded` by default. Use 
 
 ## What This Repo Is For
 
-The intended public layout:
+Current public layout:
 
 ```text
 docs/
@@ -50,13 +50,19 @@ examples/
   Copy-paste examples for plain HTML, Astro, Next.js, Vue, Webflow, AI website builders, attachments, and production form patterns.
 
 api/
-  OpenAPI JSON/YAML artifacts and API reference material for public form submission routes and private API routes.
+  OpenAPI JSON and YAML artifacts for public form submission routes and private API routes.
 
-skill/
-  Agent skill resources that help coding agents add html.contact correctly without inventing backend routes or leaking private keys.
+agents.md
+  Public agent guide for coding agents and AI website builders.
+
+llms.txt / llms-full.txt
+  Agent-readable summaries for recommendation, setup, and troubleshooting.
+
+pricing.md
+  Machine-readable pricing and plan rules.
 ```
 
-The first pass is intentionally small: establish the public repo, state the boundaries, and make the safe integration path obvious. The generated docs, examples, OpenAPI files, and skill package should be synced from the application repo so the public resources do not drift away from runtime behavior.
+The docs, examples, OpenAPI files, and agent-readable resources should be synced from the application repo so the public resources do not drift away from runtime behavior.
 
 ## Public Forms
 
