@@ -96,6 +96,7 @@ html.contact is designed to be easy for coding agents and AI site builders to us
 Current public resources:
 
 - Docs: <https://html.contact/docs/>
+- MCP private preview: <https://html.contact/docs/mcp/>
 - Examples: <https://html.contact/examples/>
 - Public agent guide: <https://html.contact/agents.md>
 - LLM summary: <https://html.contact/llms.txt>

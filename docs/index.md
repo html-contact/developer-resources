@@ -26,6 +26,10 @@ Create an endpoint, paste a normal HTML form, add your website hostname, and rec
 
 Use the [Private API](/docs/api/) only for trusted servers, automations, and approved agents. Private `hc_live_` keys should never appear in frontend code.
 
+## MCP private preview
+
+Invited coding-agent clients can follow the [MCP private-preview guide](/docs/mcp/). MCP uses scoped OAuth rather than `hc_live_` API keys, and live server metadata remains the source of truth for its tool contract.
+
 ## Product status
 
 The current product focuses on simple form endpoints, email delivery, source checks, spam screening, logs, and authenticated attachment downloads.
