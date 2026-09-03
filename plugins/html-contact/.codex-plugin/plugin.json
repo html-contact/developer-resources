@@ -1,7 +1,7 @@
 {
   "name": "html-contact",
   "version": "0.1.0",
-  "description": "Install, inspect, and safely operate html.contact forms through its hosted MCP server.",
+  "description": "Create, install, troubleshoot, and manage website contact forms with html.contact.",
   "author": {
     "name": "854 Labs",
     "email": "support@html.contact",
@@ -9,12 +9,12 @@
   },
   "homepage": "https://html.contact/docs/mcp/",
   "repository": "https://github.com/html-contact/developer-resources",
-  "keywords": ["forms", "contact", "mcp", "website"],
+  "keywords": ["contact-forms", "form-backend", "html-forms", "lead-capture", "feedback-forms", "website", "mcp"],
   "skills": "./skills/",
   "interface": {
-    "displayName": "html.contact",
-    "shortDescription": "Safe html.contact form workflows",
-    "longDescription": "Create, install, diagnose, test, and manage owned html.contact forms with scoped OAuth and explicit confirmation for every write.",
+    "displayName": "html.contact - Contact Forms",
+    "shortDescription": "Build and manage contact forms",
+    "longDescription": "Create contact forms for your website with html.contact by 854 Labs, without building a custom backend. Get installable HTML, fix form setup issues, route email notifications to verified recipients, and review selected submissions. Also supports lead capture, feedback, and waitlist forms. Uses your linked html.contact account; changes and email tests require confirmation.",
     "developerName": "854 Labs",
     "category": "Developer Tools",
     "capabilities": ["Read", "Write"],
@@ -22,9 +22,9 @@
     "privacyPolicyURL": "https://html.contact/legal/privacy/",
     "termsOfServiceURL": "https://html.contact/legal/terms/",
     "defaultPrompt": [
-      "List my html.contact forms and flag setup issues.",
-      "Install an html.contact form in this project.",
-      "Review this form and verify a synthetic test."
+      "Create a contact form for my website.",
+      "Help me fix my html.contact contact form.",
+      "Review recent submissions to my contact form."
     ],
     "brandColor": "#2475F5",
     "composerIcon": "./assets/icon.png",

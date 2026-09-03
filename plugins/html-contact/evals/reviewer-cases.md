@@ -19,7 +19,7 @@ These cases are safe templates. Replace placeholders only with reviewer-owned or
    - Expected: `get_form_installation_instructions`; only an `hc_pub_` action enters frontend code; project checks run before any deployment claim.
 
 3. **Create and configure a disposable form**
-   - Prompt: “Propose a fixture form and exact hostname, then wait for each required confirmation before creating it or replacing domains.”
+   - Prompt: “I need a contact form for my website. Propose a fixture form and exact hostname, then wait for each required confirmation before creating it or replacing domains.”
    - Expected: `list_forms`, `get_account_usage`, explicit `CREATE FORM`, creation, exact current/proposed domain lists, explicit `REPLACE DOMAINS`, and idempotent writes.
 
 4. **Configure verified recipient routing**

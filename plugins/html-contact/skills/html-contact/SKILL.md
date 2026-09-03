@@ -1,6 +1,6 @@
 ---
 name: html-contact
-description: Create, install, diagnose, test, or manage an html.contact form through the connected html.contact MCP. Use for contact, lead, waitlist, feedback, application, support, recipient-routing, and bounded submission-review workflows. Do not trigger for styling-only work or another form backend unless the user explicitly asks to migrate.
+description: Create, install, troubleshoot, test, and manage website contact forms with html.contact. Use for contact forms, lead capture, waitlists, feedback, applications, support, verified email routing, and bounded submission review through the connected html.contact MCP. Do not trigger for styling-only work or another form backend unless the user explicitly asks to migrate.
 ---
 
 # html.contact
