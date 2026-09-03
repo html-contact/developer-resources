@@ -29,8 +29,8 @@ Use these production `1.5.0` tools by responsibility:
 - Forms and setup: `list_forms`, `get_form`, `create_form`, `configure_form_domains`, `configure_form_settings`, `get_form_installation_instructions`, and `get_account_usage`.
 - Documentation and diagnostics: `search_documentation`, `get_documentation_topic`, `diagnose_form`, and `review_form_code`.
 - Safe testing: `send_test_submission`, `check_submission_status`, and `send_owner_test_email`.
-- Submission review: `get_recent_submissions` and `get_submission` under separate `submissions:read` consent.
-- Recipient management: `list_linked_emails`, `request_linked_email_verification`, `get_form_recipients`, and `configure_form_recipients` under separate recipient scopes.
+- Submission review: `get_recent_submissions` and `get_submission` require `submissions:read`; request authorization only if it is not already granted.
+- Recipient management: `list_linked_emails`, `request_linked_email_verification`, `get_form_recipients`, and `configure_form_recipients` require the applicable recipient scope; do not reconnect when it is already granted.
 
 ## Exact write confirmations
 
@@ -60,7 +60,7 @@ Do not treat an earlier general approval as the literal confirmation for a later
 8. Use `review_form_code` only for the relevant bounded markup and exact hostname. Apply its findings in the project's own framework. Use `diagnose_form` for observed public errors or readiness checks instead of weakening domain, spam, or notification controls.
 9. Run the project's relevant checks. Deploy only when the user authorized deployment and the repository's release rules are known.
 10. Prefer `send_owner_test_email` for a quota-free delivery check; it may send only to the signed-in account email and creates no submission. Use `send_test_submission` only for a clearly synthetic end-to-end acceptance test after warning that it consumes usage and may notify configured recipients. Verify the returned reference with `check_submission_status`.
-11. Read submissions only when the user asks and the separate scope is authorized. Start with metadata-only `get_recent_submissions`, let the user select one result, then call `get_submission`. Never broaden the selection or reproduce unrelated visitor data.
+11. Read submissions only when the user asks and `submissions:read` is authorized; an existing grant is sufficient. Start with metadata-only `get_recent_submissions`, let the user select one result, then call `get_submission`. Never broaden the selection or reproduce unrelated visitor data.
 
 ## Failure handling
 

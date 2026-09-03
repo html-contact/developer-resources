@@ -28,7 +28,9 @@ Start a fresh Codex task after installation so the plugin skill and registered a
 
 ## Authorization
 
-Register a new client with `forms:read` as its only default product scope. Request `forms:write`, `submissions:read`, `recipients:read`, or `recipients:write` only for a selected action that requires it. The server publishes a matching OAuth security scheme on every tool.
+Register a new client with `forms:read` as its default product scope where the host supports it. Request `forms:write`, `submissions:read`, `recipients:read`, or `recipients:write` when needed and not already granted. The server publishes the required OAuth scope on every tool; an existing grant does not need to be repeated for each action.
+
+For the single-owner private ChatGPT preview, narrow base consent and denial were verified before the owner intentionally accepted all advertised product scopes. ChatGPT's observed incremental reconnect requested all product scopes. That private choice does not reduce tool capabilities, bypass ownership checks, or replace confirmation for mutations; it is not public-review least-privilege evidence.
 
 Never paste an OAuth value or `hc_live_` key into a prompt. Use the hosted account-link flow.
 
@@ -36,7 +38,7 @@ Never paste an OAuth value or `hc_live_` key into a prompt. Use the hosted accou
 
 | Host | Package | Server | Registration and callback | Verified scope/evidence | Status |
 | --- | --- | --- | --- | --- | --- |
-| ChatGPT developer mode | `0.1.0` | `1.5.0` | DCR; exact hosted ChatGPT HTTPS callback | Existing-owner OAuth, exact twenty-tool discovery, bounded form-list read; initial portal registration preselected optional scopes | Private baseline pass; least-privilege re-consent, writes, sensitive reads, and lifecycle remain |
+| ChatGPT developer mode | `0.1.0` | `1.5.0` | DCR; exact hosted ChatGPT HTTPS callback | Existing-owner OAuth, denial, narrow base consent, intentional full private grant, twenty-tool discovery, bounded form/linked-email-count/submission-metadata reads | Private read baseline pass; controlled writes, selected synthetic detail, lifecycle, and reviewer gates remain |
 | Codex CLI `0.147.0` | direct MCP predecessor | `1.5.0` | DCR; narrowly constrained native loopback | Saved-credential form-list and recipient-scoped linked-email reads | Read baseline pass |
 | MCP Inspector | direct MCP predecessor | `1.4.0` historical contract | DCR; exact `/oauth/callback` path | Exact fifteen-tool discovery and token revocation | Historical baseline pass |
 
