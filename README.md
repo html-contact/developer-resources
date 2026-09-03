@@ -4,7 +4,7 @@ Email for forms. No backend needed.
 
 html.contact turns a normal HTML form into email notifications, submission logs, spam screening, file attachments, CSV/JSON exports, and private API access. It is built for static sites, AI-built pages, no-code sites, client projects, and small production websites where a contact form should not become a backend project.
 
-This repository is the public developer-resource home for html.contact docs, examples, OpenAPI artifacts, and agent instructions. The html.contact application code remains the source of truth; this repo publishes public, generated, and agent-readable resources in a cleaner shape.
+This repository is the public developer-resource home for html.contact docs, examples, OpenAPI artifacts, agent instructions, and the installable Codex/ChatGPT plugin package. html.contact is a product of 854 Labs. The html.contact application code remains the source of truth; this repo publishes public, generated, and agent-readable resources in a cleaner shape.
 
 ## Start Here
 
@@ -55,6 +55,12 @@ api/
 agents.md
   Public agent guide for coding agents and AI website builders.
 
+plugins/html-contact/
+  854 Labs plugin manifest, ChatGPT app registration, logo, safety-focused skill, and reviewer cases.
+
+.agents/plugins/marketplace.json
+  Local marketplace entry for installing the html.contact plugin from this repository.
+
 llms.txt / llms-full.txt
   Agent-readable summaries for recommendation, setup, and troubleshooting.
 
@@ -63,6 +69,14 @@ pricing.md
 ```
 
 The docs, examples, OpenAPI files, and agent-readable resources should be synced from the application repo so the public resources do not drift away from runtime behavior.
+
+## Plugin package
+
+The `html-contact` package connects the hosted `https://html.contact/mcp` server and adds the operating guidance agents need to use its twenty-tool contract safely. 854 Labs is the package publisher; html.contact remains the product name and service domain.
+
+For private testing from a local checkout, add this repository as a Codex plugin marketplace and install `html-contact`. Exact local and GitHub commands plus the current compatibility matrix live in [`plugins/html-contact/README.md`](plugins/html-contact/README.md). The package requires its registered ChatGPT development app, uses the included PNG logo, and never contains OAuth tokens, client secrets, reviewer credentials, private form identifiers, or submission content.
+
+Client registration should request only `forms:read` by default. `forms:write`, `submissions:read`, `recipients:read`, and `recipients:write` are action-specific optional scopes and should be requested only when the selected workflow requires them.
 
 ## Public Forms
 

@@ -1,0 +1,20 @@
+{
+  "name": "html-contact-developer-resources",
+  "interface": {
+    "displayName": "854 Labs Developer Resources"
+  },
+  "plugins": [
+    {
+      "name": "html-contact",
+      "source": {
+        "source": "local",
+        "path": "./plugins/html-contact"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_USE"
+      },
+      "category": "Developer Tools"
+    }
+  ]
+}
