@@ -15,13 +15,15 @@ Replace `hc_pub_REPLACE` with the public form key from your form.
     style="position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden;"
     aria-hidden="true"
   >
-    <label for="hc-company">Company</label>
+    <label for="hc-extra-field">Leave this field empty</label>
     <input
-      id="hc-company"
-      name="_hc_hp_company"
+      id="hc-extra-field"
+      name="_hc_hp_extra"
       type="text"
       tabindex="-1"
-      autocomplete="off"
+      autocomplete="new-password"
+      data-1p-ignore="true"
+      data-lpignore="true"
     >
   </div>
 
@@ -46,10 +48,18 @@ Replace `hc_pub_REPLACE` with the public form key from your form.
 | Field | Behavior |
 | --- | --- |
 | `_replyto` | Sets reply-to from a literal email address or a submitted field name. `email` means use the submitted `email` field. If omitted, html.contact can infer common email fields such as `email`, `Email`, `your_email`, `your-email`, `reply_to`, `replyTo`, and `contact_email`. |
-| `_hc_hp_*` | Honeypot field prefix. Real visitors leave these visually hidden fields empty; filled values are rejected before email delivery. `_gotcha` is still supported for older snippets. |
+| `_hc_hp_*` | Autofill-resistant honeypot field prefix. Real visitors leave these visually hidden fields empty; filled values are rejected before email delivery. `_gotcha` is still supported for older snippets. |
 | `subject` | Normal submitted field that can appear in submissions and set the notification subject. If no `subject` field is submitted, html.contact uses the dashboard default subject. |
 
 If your form has a dashboard default intro, html.contact always shows that intro at the top of notification emails. A submitted `_intro` field is stored as a normal field and does not override the dashboard intro.
+
+## Autofill-resistant honeypot names
+
+The honeypot should catch simple bots without looking like a browser profile field. Use neutral names such as `_hc_hp_extra`, `_hc_hp_optional`, `_hc_hp_notes`, `_hc_hp_details`, `_hc_hp_blank`, or `_hc_hp_context`.
+
+Avoid names such as `_hc_hp_company`, `_hc_hp_name`, `_hc_hp_email`, `_hc_hp_phone`, `_hc_hp_website`, and `_hc_hp_address`. Also avoid those profile words in the honeypot `id`, label, placeholder, or `autocomplete` value. Browsers and password managers can fill offscreen fields when they look like real contact fields.
+
+`autocomplete="new-password"` plus `data-1p-ignore="true"` and `data-lpignore="true"` help reduce accidental autofill, but the most important protection is not making the honeypot look like a real field.
 
 ## Optional thank-you redirect
 
@@ -85,13 +95,15 @@ Use `multipart/form-data` when the form includes a file input. Current browser f
     style="position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden;"
     aria-hidden="true"
   >
-    <label for="hc-company">Company</label>
+    <label for="hc-extra-field">Leave this field empty</label>
     <input
-      id="hc-company"
-      name="_hc_hp_company"
+      id="hc-extra-field"
+      name="_hc_hp_extra"
       type="text"
       tabindex="-1"
-      autocomplete="off"
+      autocomplete="new-password"
+      data-1p-ignore="true"
+      data-lpignore="true"
     >
   </div>
 

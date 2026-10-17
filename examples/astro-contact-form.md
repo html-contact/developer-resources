@@ -35,6 +35,6 @@ const formAction = "https://html.contact/f/hc_pub_REPLACE";
 - Add your deployed domain to the form allowlist before testing.
 - Add any named fields you need. html.contact stores submitted values by each input's `name` attribute.
 - For selects, checkboxes, and radios, the submitted `value` is what gets stored under that field name.
-- Use [Attachments](/examples/attachments/) only when the form needs a file input.
+- Use [Attachments](attachments.md) only when the form needs a file input.
 
-For the full plain HTML reference, see [Simple HTML Contact Form](/examples/simple-html-contact-form/).
+For the full plain HTML reference, see [Simple HTML Contact Form](simple-html-contact-form.md).

@@ -30,4 +30,4 @@ Vue can use a normal browser form post. No client SDK or API route is required f
 - Add the exact deployed hostname to your form's allowed domains before testing.
 - Add any named fields you need. html.contact stores submitted values by each input's `name` attribute.
 - For selects, checkboxes, and radios, the submitted `value` is what gets stored under that field name.
-- Use [Attachments](/examples/attachments/) only when the form needs a file input.
+- Use [Attachments](attachments.md) only when the form needs a file input.

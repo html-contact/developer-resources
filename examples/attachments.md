@@ -38,4 +38,4 @@ Use `multipart/form-data` only when the form includes a file input. Replace `hc_
 
 Treat every unknown upload like any other unknown attachment: download only when you expect the file, scan it with your security tools, and be cautious before opening documents, archives, or executables.
 
-For more detail, see [File Uploads](/docs/attachments/).
+For more detail, see [File Uploads](../docs/attachments.md).

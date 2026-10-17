@@ -36,4 +36,4 @@ Add the exact deployed hostname that serves the form in html.contact, then test 
 - Do not add `_subject` or `_intro` expecting them to change notification behavior. Use `subject` without the underscore when you want the submitted form to set the email subject.
 - Every input you want to receive needs a `name` attribute.
 
-For the recommended production version with reply-to, honeypot, and redirect options, see [Production HTML](/examples/production-html-contact-form/).
+For the recommended production version with reply-to, honeypot, and redirect options, see [Production HTML](production-html-contact-form.md).

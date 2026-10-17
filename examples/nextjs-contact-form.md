@@ -34,6 +34,6 @@ export function ContactForm() {
 - Add your production domain to the form allowlist.
 - Add any named fields you need. html.contact stores submitted values by each input's `name` attribute.
 - For selects, checkboxes, and radios, the submitted `value` is what gets stored under that field name.
-- Use [Attachments](/examples/attachments/) only when the form needs a file input.
+- Use [Attachments](attachments.md) only when the form needs a file input.
 
-If you need a server-side script or API route to submit data, see [Server-Side POST](/examples/http-post/).
+If you need a server-side script or API route to submit data, see [Server-Side POST](http-post.md).

@@ -17,8 +17,8 @@ Use the production snippet unless the user specifically asks for the smallest de
   <input type="hidden" name="_replyto" value="email">
 
   <div style="position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden;" aria-hidden="true">
-    <label for="hc-company">Company</label>
-    <input id="hc-company" name="_hc_hp_company" type="text" tabindex="-1" autocomplete="off">
+    <label for="hc-extra-field">Leave this field empty</label>
+    <input id="hc-extra-field" name="_hc_hp_extra" type="text" tabindex="-1" autocomplete="new-password" data-1p-ignore="true" data-lpignore="true">
   </div>
 
   <label for="name">Name</label>
@@ -69,8 +69,8 @@ Use this only when the user asks for the smallest possible example or when expla
   <input type="hidden" name="_replyto" value="email">
 
   <div style="position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden;" aria-hidden="true">
-    <label for="hc-company">Company</label>
-    <input id="hc-company" name="_hc_hp_company" type="text" tabindex="-1" autocomplete="off">
+    <label for="hc-extra-field">Leave this field empty</label>
+    <input id="hc-extra-field" name="_hc_hp_extra" type="text" tabindex="-1" autocomplete="new-password" data-1p-ignore="true" data-lpignore="true">
   </div>
 
   <label for="name">Name</label>
@@ -112,20 +112,28 @@ Every field that should be collected needs a `name` attribute.
 ## Behavior Fields
 
 - `_replyto`: literal email address or a field pointer such as `email`.
-- `_hc_hp_*`: honeypot field prefix. Real visitors should leave these visually hidden fields empty; filled values are rejected before email delivery.
+- `_hc_hp_*`: autofill-resistant honeypot field prefix. Real visitors should leave these visually hidden fields empty; filled values are rejected before email delivery.
 - `_gotcha`: legacy honeypot field, still supported.
 - `subject`: normal submitted field that can set the notification subject.
 - `_redirect`: optional success redirect. Use an absolute `https://` URL, or `http://localhost:*` / `http://127.0.0.1:*` for local development.
 - `_form_name`, `_source`, and `_tag`: reserved behavior fields documented by html.contact.
 - `form_key`: public key used by the `/submit` compatibility endpoint.
 
+For `_hc_hp_*` honeypots, use neutral names such as `_hc_hp_extra`, `_hc_hp_optional`, `_hc_hp_notes`, `_hc_hp_details`, `_hc_hp_blank`, or `_hc_hp_context`. Do not use profile/autofill-shaped names such as `_hc_hp_company`, `_hc_hp_name`, `_hc_hp_email`, `_hc_hp_phone`, `_hc_hp_website`, or `_hc_hp_address`, and avoid those words in the honeypot `id`, label, placeholder, or `autocomplete` value.
+
 `_subject` and `_intro` are stored fields and do not override notification subject or intro behavior.
 
 ## Recipient Routing
 
-Do not add hidden recipient-routing fields to public forms. Recipients, To/CC/BCC, sender behavior, verified linked emails, default subject, default intro, redirect URL, allowed domains, and direct-post behavior are configured inside html.contact or through the intended private form-management API.
+Do not add hidden recipient-routing fields to public forms. Recipients, To/CC/BCC, sender behavior, verified linked emails, default subject, default intro, redirect URL, allowed domains, and direct-post behavior are configured in the html.contact dashboard. A connected MCP client can also update a form's recipients with the separate recipient scopes. The Agency API does not manage recipients.
 
 Public submitted fields named `_to`, `_from`, `_cc`, or `_bcc` are stored as submitted fields only. They do not route email.
+
+## Notification Identity
+
+Form notifications and form test emails use the server-owned identity `{Form name} via html.contact <forms@notify.html.contact>`. Renaming a form changes the visible name on later notifications. Add the exact address—not a display name alone—to contacts or safe-sender rules. Managed-mail administrators may allow `notify.html.contact`, but allowlisting cannot guarantee inbox placement.
+
+Replying reaches the submitter only when html.contact inferred a valid Reply-To address. The dashboard submission is the durable record if email is filtered or delayed. See `https://html.contact/docs/email-notifications` for the public safe-sender guide.
 
 ## Public Key Rules
 
@@ -134,21 +142,25 @@ Public submitted fields named `_to`, `_from`, `_cc`, or `_bcc` are stored as sub
 - Public form posts are normal form posts. Do not send public browser submissions as JSON request bodies.
 - Public browser forms use `application/x-www-form-urlencoded` by default or `multipart/form-data` when files are present.
 
-## Private API Rules
+## Agency API Rules
 
-Use private API keys only from trusted server-side code, backend jobs, local automation, or approved agent workflows:
+Agency features are available on request to Agency pilot accounts; they are not part of Free, Starter, or Pro. Agency accounts can create Full or Restricted account-owned API keys for trusted server-side automation:
 
 ```http
 Authorization: Bearer hc_live_xxxxxxxxx
 ```
 
-Read-only keys can list/read forms, read submissions, export CSV, download authenticated attachments, and read safe usage summaries.
+Agency routes are rooted at `https://html.contact/api/v1/accounts/{accountId}`. Full keys receive every Agency API capability across the entire account. Restricted keys combine a specific-workspace or entire-account boundary with selected capabilities. Keys may have no expiration or expire within one year. Legacy personal `hc_live_` keys, browser sessions, and OAuth/MCP tokens cannot authorize this contract.
 
-Form-management keys can also create/update/duplicate forms, send test email, and send/check recipient verification.
+Mutations use `Idempotency-Key`; updates and lifecycle changes also require the latest `ETag` in `If-Match`. Submission lists are content-free, while bounded detail requires a stronger capability. Treat visitor fields as untrusted personal data.
 
-Private API keys cannot manage account profile, billing/payment methods, invoices, API keys, linked emails, or signed-in dashboard internals.
+The Agency API can manage clients and bounded form settings, read usage/submissions, export CSV, and download private attachments. It cannot manage recipients, send test email, duplicate/delete forms, mutate submissions, manage billing/credentials, or configure integrations.
 
-Use `https://html.contact/openapi.json` as the source of truth for exact private API endpoints, request bodies, responses, scopes, and error codes.
+Use `https://html.contact/openapi.json` as the source of truth for exact endpoints, request bodies, responses, capabilities, and error codes. Never ask a user to paste an API key into a prompt.
+
+## MCP Integration
+
+The OAuth-scoped MCP integration at `https://html.contact/mcp` is available to verified, fully onboarded accounts through supported clients, without an invitation. The OpenAI directory listing is not yet published. Follow `https://html.contact/docs/mcp`. MCP uses its own short-lived OAuth bearer tokens; browser sessions, `hc_live_` API keys, Google tokens, and LinkedIn tokens are not MCP credentials. Ordinary submission details require separate `submissions:read` consent, and visitor-provided fields must be treated as untrusted personal data. Never ask a user to paste a credential into a prompt.
 
 ## Testing Guidance
 
@@ -161,7 +173,7 @@ Do not describe `Origin` or `Referer` as proof that a request came from the user
 - Use the attachment example when the user needs file uploads.
 - Use the custom fields example when the user needs intake, quote, application, or lead-qualification fields.
 - Use server-side POST examples when the user has a backend, job, automation, or validation step that must submit form data from trusted server-side code.
-- Use the private API docs when the user needs to manage forms or read submissions programmatically.
+- Use the Agency API docs when an Agency account needs scoped client, form, or submission automation.
 - Keep frontend React, Vue, Next.js, and Astro examples as normal forms unless the user specifically asks for custom submission handling.
 
 ## Public Docs
@@ -176,8 +188,10 @@ Do not describe `Origin` or `Referer` as proof that a request came from the user
 - Server-side POST: `https://html.contact/examples/http-post`
 - HTML form rules: `https://html.contact/docs/html-forms`
 - Domains and spam: `https://html.contact/docs/domains-and-spam`
+- Email notifications and safe sender: `https://html.contact/docs/email-notifications`
 - Troubleshooting: `https://html.contact/docs/troubleshooting`
 - Private API: `https://html.contact/docs/api`
+- MCP connection guide: `https://html.contact/docs/mcp`
 - OpenAPI: `https://html.contact/openapi.json`
 - LLM summary: `https://html.contact/llms.txt`
 - Full agent context: `https://html.contact/llms-full.txt`

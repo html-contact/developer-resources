@@ -1,6 +1,6 @@
 ---
 title: Overview
-description: Learn how html.contact turns normal HTML forms into email notifications and submission logs.
+description: Connect HTML forms to email, Slack, webhooks, and AI agents, with Google Sheets available to enabled pilot accounts.
 ---
 
 html.contact is an instant form backend for static sites, AI-built sites, personal projects, and small business websites.
@@ -16,20 +16,28 @@ Create an endpoint, paste a normal HTML form, add your website hostname, and rec
 
 ## Common links
 
-- [Add a Contact Form](/docs/getting-started/)
-- [HTML Forms](/docs/html-forms/)
-- [Form Fields](/docs/form-fields/)
-- [Troubleshooting](/docs/troubleshooting/)
-- [Examples](/examples/)
+- [Add a Contact Form](getting-started.md)
+- [HTML Forms](html-forms.md)
+- [Form Fields](form-fields.md)
+- [Troubleshooting](troubleshooting.md)
+- [Examples](../examples/index.md)
 
-## Private API
+## Agency API
 
-Use the [Private API](/docs/api/) only for trusted servers, automations, and approved agents. Private `hc_live_` keys should never appear in frontend code.
+Agency accounts use the [Agency API](api.md) for trusted server-side client, form, submission, export, and attachment automation. Account-owned `hc_live_` Agency API keys should never appear in frontend code or prompts.
 
-## MCP private preview
+## Connect your tools
 
-Invited coding-agent clients can follow the [MCP private-preview guide](/docs/mcp/). MCP uses scoped OAuth rather than `hc_live_` API keys, and live server metadata remains the source of truth for its tool contract.
+- [Slack](slack.md): send new inquiries to a team channel, with selected fields or a link to the full response.
+- [Signed webhooks](webhooks.md): deliver new responses to your app as JSON, with delivery history and retries.
+- [Google Sheets](google-sheets.md): append new responses to a dedicated worksheet with automatic columns. Currently limited to enabled pilot accounts.
+
+Slack and webhooks are included on every plan. Google Sheets has no paid-plan requirement; its availability is still limited.
+
+## Connect with MCP
+
+Verified, fully onboarded accounts can connect supported AI and coding-agent clients with [scoped MCP access](mcp.md). Create and troubleshoot forms, get installation instructions, and approve configuration changes from your agent. No invitation or `hc_live_` API key is required. The ChatGPT app is being prepared for directory review; its listing is not published yet.
 
 ## Product status
 
-The current product focuses on simple form endpoints, email delivery, source checks, spam screening, logs, and authenticated attachment downloads.
+Keep your own form design. html.contact handles response collection, source checks, spam screening, email notifications, connected destinations, and submission history.

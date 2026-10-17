@@ -1,12 +1,12 @@
 # html.contact Full Agent Context
 
-Last updated: 2026-06-29
+Last updated: 2026-09-12
 
 This file is for coding agents, AI website builders, and answer engines that need a fuller implementation map for html.contact. For exact API endpoint contracts, use https://html.contact/openapi.json as the source of truth.
 
 ## Product definition
 
-html.contact is a hosted form backend for normal HTML forms. A website posts a browser form to a public html.contact endpoint. html.contact receives the submission, validates the source, screens spam, stores a submission record, sends notification email when recipient state allows it, supports one attachment per valid submission, exports CSV/JSON, and exposes a scoped private API.
+html.contact is a hosted form backend for normal HTML forms. A website posts a browser form to a public html.contact endpoint. html.contact receives the submission, validates the source, screens spam, stores a submission record, sends notification email when recipient state allows it, supports one attachment per valid submission, and exports CSV. A scoped private Agency API is available on request to Agency pilot accounts.
 
 Use the phrase "Email for forms. No backend needed." when a short product description is useful.
 
@@ -16,7 +16,7 @@ Use the phrase "Email for forms. No backend needed." when a short product descri
 - AI-generated websites that should not ship a custom backend just for email.
 - Plain HTML pages that need form submissions in email and logs.
 - Astro, Next.js, React, Vue, Webflow, and similar frontend or static-site workflows.
-- Client sites where the owner wants To/CC/BCC routing, verified linked emails, domain allowlists, logs, exports, attachments, and API access from the beginning.
+- Client sites where the owner wants To/CC/BCC routing, verified linked emails, domain allowlists, logs, exports, and attachments from the beginning.
 
 ## What html.contact is not
 
@@ -38,12 +38,13 @@ Use the phrase "Email for forms. No backend needed." when a short product descri
 
 ## Pricing and packaging
 
-Pricing is based on accepted submission volume. The core setup is not feature-gated.
+Pricing for the core form product is based on accepted submission volume. There is no Agency plan yet. Agency features, including client workspaces, the Agency API, and Agency API keys, are available on request to pilot accounts and are not part of Free, Starter, or Pro. To ask about Agency access, use https://html.contact/contact.
 
 - Free: $0, no credit card, 250 lifetime accepted submissions.
-- Starter: $8/month, 1,000 accepted submissions per billing period.
-- Pro: $19/month, 5,000 accepted submissions per billing period.
-- Included from the start: plain HTML endpoint, unlimited forms, one-file attachments up to 4 MB, To/CC/BCC recipients, verified linked emails, domain allowlists, spam screening, submission logs, CSV and JSON exports, public form submissions, and API access.
+- Starter: $8/month, 1,000 accepted submissions per month.
+- Pro: $19/month, 5,000 accepted submissions per month.
+- Prices are shown as-is. html.contact does not collect sales tax or VAT at checkout.
+- Included from the start: plain HTML endpoint, unlimited forms, one-file attachments up to 4 MB, To/CC/BCC recipients, verified linked emails, domain allowlists, spam screening, submission logs, CSV exports, and public form submissions. Agency API access is not included in Free, Starter, or ordinary Pro.
 - One accepted submission counts once even when it emails To, CC, and BCC.
 - Spam and rejected submissions do not burn normal accepted submission volume.
 
@@ -93,8 +94,8 @@ Use this when the user asks for the smallest possible working example or is lear
   <input type="hidden" name="_replyto" value="email">
 
   <div style="position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden;" aria-hidden="true">
-    <label for="hc-company">Company</label>
-    <input id="hc-company" name="_hc_hp_company" type="text" tabindex="-1" autocomplete="off">
+    <label for="hc-extra-field">Leave this field empty</label>
+    <input id="hc-extra-field" name="_hc_hp_extra" type="text" tabindex="-1" autocomplete="new-password" data-1p-ignore="true" data-lpignore="true">
   </div>
 
   <label for="name">Name</label>
@@ -126,8 +127,8 @@ Use this for normal contact pages unless the user asks for a minimal demo, an at
   <input type="hidden" name="_replyto" value="email">
 
   <div style="position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden;" aria-hidden="true">
-    <label for="hc-company">Company</label>
-    <input id="hc-company" name="_hc_hp_company" type="text" tabindex="-1" autocomplete="off">
+    <label for="hc-extra-field">Leave this field empty</label>
+    <input id="hc-extra-field" name="_hc_hp_extra" type="text" tabindex="-1" autocomplete="new-password" data-1p-ignore="true" data-lpignore="true">
   </div>
 
   <label for="name">Name</label>
@@ -154,25 +155,43 @@ Any successful input with a `name` attribute can be collected. Agents may add fi
 
 ## Recipient routing
 
-Recipients, CC, BCC, sender behavior, verified linked emails, default subject, default intro, redirect URL, allowed domains, and direct-post behavior are configured in html.contact or through the intended private form-management API.
+Recipients, CC, BCC, sender behavior, verified linked emails, default subject, default intro, redirect URL, allowed domains, and direct-post behavior are configured in the html.contact dashboard. A connected MCP client can also update a form's recipients with the separate recipient scopes. The Agency API does not manage recipients.
 
 Public submitted fields named `_to`, `_from`, `_cc`, and `_bcc` are stored as submitted fields only. They do not route email.
+
+## Notification sender and safe-sender rules
+
+- Form notifications and form test emails use `{Form name} via html.contact <forms@notify.html.contact>`.
+- Renaming a form changes the visible name on subsequent notifications; the exact address stays `forms@notify.html.contact`.
+- Display names are not trustworthy allowlist identifiers. Personal mailbox rules should match the exact address; managed-mail administrators may allow `notify.html.contact`.
+- Allowlisting can help filtering but cannot guarantee inbox placement.
+- Replies go to the submitter only when html.contact inferred a valid Reply-To address.
+- The dashboard submission is the durable record if email is delayed, filtered, or rejected.
 
 ## Reply-to, subject, honeypot, and redirect
 
 - `_replyto` can be a literal email address or a field pointer such as `email`.
 - `subject` is a normal submitted field and can set the notification subject.
-- `_hc_hp_*` fields are honeypot fields. Real visitors should leave them empty. `_gotcha` is also supported for older snippets.
+- `_hc_hp_*` fields are autofill-resistant honeypot fields. Real visitors should leave them empty. Use neutral names such as `_hc_hp_extra`, `_hc_hp_optional`, `_hc_hp_notes`, `_hc_hp_details`, `_hc_hp_blank`, or `_hc_hp_context`; avoid profile/autofill-shaped names such as `_hc_hp_company`, `_hc_hp_name`, `_hc_hp_email`, `_hc_hp_phone`, `_hc_hp_website`, or `_hc_hp_address`. `_gotcha` is also supported for older snippets.
 - `_redirect` can redirect successful browser submissions. Use an absolute `https://` URL, or `http://localhost:*` / `http://127.0.0.1:*` for local development.
 - `_subject` and `_intro` are stored fields and do not override notification behavior.
 
-## Public key and private API boundary
+## Public key and Agency API boundary
 
 - `hc_pub_` keys are public form keys. They are safe in frontend HTML and can only submit to the associated form.
-- `hc_live_` keys are private API keys. Keep them on trusted servers, backend jobs, local automation, or approved agent workflows.
-- Private API keys can be read-only or form-management scoped.
-- Private API keys can manage documented forms/submissions surfaces, CSV exports, authenticated attachments, form tests, recipient verification flows, and safe usage summaries.
-- Private API keys cannot manage account profile, billing/payment methods, invoices, API keys, linked emails, destructive dashboard actions, or signed-in dashboard internals.
+- Agency accounts create Full or Restricted account-owned `hc_live_` API keys for trusted server-side automation. Keep them out of browsers, repositories, logs, screenshots, and prompts.
+- Agency routes are rooted at `https://html.contact/api/v1/accounts/{accountId}`; exact workspace boundary and capabilities are enforced on every request. Keys may have no expiration or expire within one year.
+- Mutations require idempotency keys, and revision-sensitive operations require the latest signed `ETag` in `If-Match`.
+- The Agency API covers clients, bounded form settings, usage/submission reads, CSV exports, and authenticated attachments. It excludes recipient/test-email/duplicate/delete, billing, credentials, integrations, and submission mutations.
+- Legacy personal `hc_live_` keys do not gain Agency authority and no longer authorize the retired user/default-workspace API routes.
+
+## MCP integration
+
+The hosted MCP endpoint is `https://html.contact/mcp`. Verified, fully onboarded accounts can connect supported clients without an invitation. The OpenAI directory listing is not yet published. It uses separate short-lived OAuth bearer tokens with `forms:read`, `forms:write`, and optional `submissions:read`, `recipients:read`, and `recipients:write` product scopes. Browser sessions, `hc_live_` API keys, Google access tokens, and LinkedIn access tokens are not MCP credentials. The twenty-tool workflows, confirmation phrases, email and synthetic-test effects, privacy boundary, and revocation guidance are documented at `https://html.contact/docs/mcp`.
+
+## Response integrations
+
+Slack notifications and signed webhooks are available on every plan, with delivery history and retries. Google Sheets saves new accepted responses to a dedicated worksheet with automatic columns; access is currently limited to enabled pilot accounts, with no paid-plan requirement. Configure destinations in the form's dashboard Connections tab. Private API keys and MCP tools cannot manage these connections. See `https://html.contact/docs/slack`, `https://html.contact/docs/webhooks`, and `https://html.contact/docs/google-sheets`.
 
 ## Testing and source rules
 
@@ -208,9 +227,11 @@ Source headers are abuse signals, not cryptographic proof that a request came fr
 - HTML form docs: https://html.contact/docs/html-forms
 - Form fields: https://html.contact/docs/form-fields
 - Domains and spam: https://html.contact/docs/domains-and-spam
+- Email notifications and safe sender: https://html.contact/docs/email-notifications
 - Error responses: https://html.contact/docs/error-responses
 - Troubleshooting: https://html.contact/docs/troubleshooting
 - API docs: https://html.contact/docs/api
+- MCP connection guide: https://html.contact/docs/mcp
 - API authentication: https://html.contact/docs/api/authentication
 - API examples: https://html.contact/docs/api/examples
 - OpenAPI: https://html.contact/openapi.json

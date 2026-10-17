@@ -51,22 +51,11 @@ Check:
 - The recipient is not paused by a delivery failure.
 - The account is not at its submission usage limit.
 - The submission is not in rejected or spam results.
-- The email did not land in spam or filtering on the receiving mailbox.
+- Mail from `forms@notify.html.contact` did not land in spam, quarantine, or another receiving-mailbox filter.
 
 In html.contact, open the submission and check the email status and request checks.
 
-### What delivery statuses mean
-
-| Status | What to do next |
-| --- | --- |
-| `not_attempted` | Check whether notifications are enabled and the recipient is verified and available. The submission is still stored. |
-| `pending`, `sending`, `provider_accepted`, or `queued` | Wait briefly, then check the status again. The submission is already stored. |
-| `delivered` | The delivery provider reports delivery. If the message is missing, check spam, quarantine, mailbox rules, and the exact recipient address. |
-| `failed` | Review the recipient and notification configuration, then retry one controlled test. |
-| `bounced` or `suppressed` | Open the form in the dashboard and resolve the recipient delivery state before testing again. |
-| `unknown` | Use the dashboard as the durable record. If the state persists, contact support with the form name, approximate time, and content-free request ID or synthetic test reference—never a token or full submission payload. |
-
-An MCP synthetic test consumes submission usage and may send a real notification. If retrying an uncertain MCP result, reuse the same idempotency key rather than creating another test with a new key.
+The dashboard submission is the durable record. Add the exact address—not only the visible display name—to contacts or safe senders. Managed-mail administrators may allow `notify.html.contact`, although allowlisting cannot guarantee inbox placement. See [Email Notifications & Safe Sender](email-notifications.md).
 
 ## My custom field is missing
 
@@ -180,4 +169,4 @@ Configure recipients inside html.contact.
 
 For browser forms, html.contact can show an HTML error page. For JSON while testing, send `Accept: application/json` or add `?format=json`.
 
-See [Error Responses](/docs/error-responses/) for the public form error table.
+See [Error Responses](error-responses.md) for the public form error table.

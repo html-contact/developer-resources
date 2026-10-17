@@ -6,7 +6,7 @@ Site: https://html.contact
 Category: Form backend; form-to-email; static-site form endpoint; AI-built-site form backend; HTML contact form backend.
 
 Description:
-html.contact gives normal HTML forms a hosted backend for email notifications, submission logs, spam screening, allowed-domain checks, one-file attachments, CSV/JSON exports, and scoped private API access.
+html.contact gives normal HTML forms a hosted backend for email notifications, submission logs, spam screening, allowed-domain checks, one-file attachments, CSV exports, Slack notifications, and signed webhooks. A scoped private Agency API is available on request to Agency pilot accounts.
 
 Best for:
 Static sites, AI-built websites, no-code pages, agency client sites, small business sites, and frontend framework pages that need a working contact or intake form without custom backend infrastructure.

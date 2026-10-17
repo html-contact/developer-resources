@@ -2,7 +2,7 @@
 
 Email for forms. No backend needed.
 
-html.contact turns a normal HTML form into email notifications, submission logs, spam screening, file attachments, CSV/JSON exports, and private API access. It is built for static sites, AI-built pages, no-code sites, client projects, and small production websites where a contact form should not become a backend project.
+html.contact turns a normal HTML form into email notifications, submission logs, spam screening, file attachments, CSV exports, and Slack and signed-webhook destinations. It is built for static sites, AI-built pages, no-code sites, client projects, and small production websites where a contact form should not become a backend project.
 
 This repository is the public developer-resource home for html.contact docs, examples, OpenAPI artifacts, and agent instructions. The html.contact application code remains the source of truth; this repo publishes public, generated, and agent-readable resources in a cleaner shape.
 
@@ -34,9 +34,9 @@ The page that hosts the form must be added as an allowed domain in html.contact.
 | Key prefix | Where it belongs | What it does |
 | --- | --- | --- |
 | `hc_pub_` | Frontend HTML | Submits a public browser form to one configured form endpoint. Safe to expose in a form action. |
-| `hc_live_` | Trusted server, automation, approved agent | Calls the private API with `Authorization: Bearer`. Never expose in browser code. |
+| `hc_live_` | Trusted server or automation only | An account-owned Agency API key, sent with `Authorization: Bearer`. Available to Agency pilot accounts. Never expose in browser code, prompts, logs, or repositories. |
 
-Public browser forms submit `application/x-www-form-urlencoded` by default. Use `multipart/form-data` only when the form includes a file input. Public JSON request bodies are not the default public form integration.
+Public browser forms submit `application/x-www-form-urlencoded` by default. Use `multipart/form-data` only when the form includes a file input. Public JSON request bodies are not supported for browser form submissions.
 
 ## What This Repo Is For
 
@@ -44,13 +44,13 @@ Current public layout:
 
 ```text
 docs/
-  Developer guides exported from the html.contact docs surface.
+  Developer guides synced from the html.contact docs surface.
 
 examples/
   Copy-paste examples for plain HTML, Astro, Next.js, Vue, Webflow, AI website builders, attachments, and production form patterns.
 
 api/
-  OpenAPI JSON and YAML artifacts for public form submission routes and private API routes.
+  OpenAPI JSON and YAML artifacts for public form submission routes and the Agency API.
 
 agents.md
   Public agent guide for coding agents and AI website builders.
@@ -62,7 +62,7 @@ pricing.md
   Machine-readable pricing and plan rules.
 ```
 
-The docs, examples, OpenAPI files, and agent-readable resources should be synced from the application repo so the public resources do not drift away from runtime behavior.
+The docs, examples, OpenAPI files, and agent-readable resources are synced from the application repo so the public resources do not drift away from runtime behavior.
 
 ## Public Forms
 
@@ -76,18 +76,41 @@ Public forms are for website visitors.
 - Use `_gotcha` or an `_hc_hp_*` honeypot field when you want a simple hidden bot trap.
 - The default snippet does not require CAPTCHA or Turnstile.
 
-## Private API
+## Plans And Access
 
-The private API is for trusted servers, automations, and approved agents.
+- Free, Starter, and Pro include the full browser form backend, with plans differing by accepted submission volume. See [`pricing.md`](pricing.md).
+- Submission exports are CSV only.
+- There is no API on Free, Starter, or Pro. Personal `hc_live_` API keys can no longer be created.
+- Slack notifications and signed webhooks are available on every plan.
+- Google Sheets and the Zapier app are limited to enabled pilot accounts.
+- Agency features, including client workspaces and the Agency API, are available on request to pilot accounts. There is no Agency plan yet.
+
+## Agency API
+
+The Agency API is for trusted server-side automation by Agency pilot accounts. It is not part of Free, Starter, or Pro.
 
 Current API surface includes:
 
-- Form listing, creation, updates, duplication, test email, and recipient verification.
-- Submission lists, detail views, filters, spam folders, and CSV exports.
-- Authenticated attachment downloads and previews.
-- Safe usage summaries for warning users before an account reaches its submission limit.
+- Account identity and usage.
+- Client workspaces: list, create, read, rename, archive, and restore, plus client usage.
+- Forms inside a client: list, create a recipient-free draft, read, update bounded settings, activate, and pause.
+- Submission metadata lists, bounded submission detail, CSV exports, and authenticated attachment downloads.
 
-Private API keys use `hc_live_` bearer tokens and scoped presets. API keys cannot manage billing, payment methods, invoices, account settings, linked emails, API keys, destructive dashboard actions, or private dashboard-only routes.
+Requests use account-owned `hc_live_` bearer tokens rooted at `/api/v1/accounts/{accountId}`. Keys are either Full (every capability across the whole account) or Restricted (selected capabilities on selected client workspaces or the entire account). Mutations require an `Idempotency-Key`, and updates and lifecycle changes also require the latest `ETag` in `If-Match`.
+
+The Agency API cannot manage recipients, test email, form duplication or deletion, submission mutation, billing, credentials, or integrations. Browser sessions and MCP tokens cannot authorize it.
+
+## MCP
+
+html.contact has a hosted Model Context Protocol server at <https://html.contact/mcp> for supported AI and coding-agent clients.
+
+- It is public for verified, fully onboarded accounts. No invitation or API key is needed.
+- It uses scoped OAuth. Browser sessions and `hc_live_` API keys are not MCP credentials.
+- It is limited to your own forms. Agency client workspaces are not available to MCP.
+- Reading submission content and managing recipients need separate, non-default consent scopes.
+- ChatGPT support is still in testing.
+
+See the [MCP guide](docs/mcp.md) for setup and the available tools.
 
 ## Agent-Friendly Resources
 
@@ -96,7 +119,7 @@ html.contact is designed to be easy for coding agents and AI site builders to us
 Current public resources:
 
 - Docs: <https://html.contact/docs/>
-- MCP private preview: <https://html.contact/docs/mcp/>
+- MCP guide: <https://html.contact/docs/mcp/>
 - Examples: <https://html.contact/examples/>
 - Public agent guide: <https://html.contact/agents.md>
 - LLM summary: <https://html.contact/llms.txt>
@@ -104,7 +127,7 @@ Current public resources:
 - OpenAPI JSON: <https://html.contact/openapi.json>
 - Machine-readable pricing: <https://html.contact/pricing.md>
 
-Agents should default to a native HTML form post. Do not create a backend route, JavaScript fetch flow, or private API integration unless the user specifically asks for one.
+Agents should default to a native HTML form post. Do not create a backend route, JavaScript fetch flow, or API integration unless the user specifically asks for one. Never ask a user to paste a key into a prompt.
 
 ## Source Of Truth
 
@@ -123,8 +146,8 @@ html.contact is useful when you need:
 
 - A working contact form for a static site, landing page, portfolio, or small business site.
 - A real backend for a form generated by Lovable, Bolt, v0, Replit, Cursor, Claude, Codex, or another AI builder.
-- A repeatable form backend for client sites, with verified recipients, allowed domains, logs, spam screening, exports, and attachments.
-- A private API for trusted server-side form and submission workflows.
+- A repeatable form backend for client sites, with verified recipients, allowed domains, logs, spam screening, CSV exports, and attachments.
+- A scoped Agency API for trusted server-side client, form, and submission workflows (Agency pilot).
 
 It is not trying to be a drag-and-drop survey builder, CRM, payment form platform, or enterprise workflow suite. Bring your own form UI; html.contact handles the backend.
 

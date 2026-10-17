@@ -31,7 +31,7 @@ JSON errors use this shape:
 | Status | Code | What it means | How to fix |
 | --- | --- | --- | --- |
 | `400` | `validation_error` | The form payload could not be parsed, a field name was too long, or spam screening rejected a link-heavy message as invalid. | Check the form encoding and field names. Keep field names short and avoid spammy/link-heavy content. |
-| `400` | `honeypot_triggered` | A honeypot field was filled. | Keep `_gotcha` and any `_hc_hp_*` fields empty for real visitors. Make sure custom scripts and autofill are not populating honeypot fields. |
+| `400` | `honeypot_triggered` | A honeypot field was filled. | Keep `_gotcha` and any `_hc_hp_*` fields empty for real visitors. Use neutral honeypot names such as `_hc_hp_extra`; avoid autofill-shaped names such as `_hc_hp_company`, `_hc_hp_name`, `_hc_hp_email`, `_hc_hp_phone`, `_hc_hp_website`, or `_hc_hp_address`. Make sure custom scripts and autofill are not populating honeypot fields. |
 | `400` | `spam_detected` | Server-side spam screening rejected the message. | Review the submitted content, field names, and automation behavior. |
 | `400` | `too_many_fields` | The submission included too many fields. | Remove unnecessary inputs before submitting. |
 | `400` | `too_many_files` | More than one non-empty attachment was submitted. | Use one file input with one selected file. |
@@ -42,8 +42,11 @@ JSON errors use this shape:
 | `403` | `domain_not_allowed` | The browser source hostname did not match the form's allowed domains. | Add the exact hostname that serves the form, such as `example.com` and `www.example.com` separately. |
 | `403` | `form_inactive` | The form is paused or otherwise not accepting submissions. | Resume the form in html.contact. |
 | `404` | `form_not_found` | The public form key is missing or invalid. | Replace the placeholder with the real `hc_pub_` key from your form. For `/submit`, include `form_key`. |
+| `409` | `idempotency_conflict` | The same explicit idempotency key was reused with different submitted content. | Retry the same logical submission with identical content, or use a new idempotency key after changing the payload. |
 | `429` | `rate_limited` | Too many submissions arrived in the current rate-limit window. | Wait and retry later. If this happens during testing, slow down repeated requests. |
-| `500` | `attachment_store_failed` | The submission was accepted, but the uploaded attachment could not be stored. | Retry the submission. If it keeps happening, remove the attachment and contact support. |
+| `500` | `attachment_store_failed` | The uploaded attachment could not be stored, so the submission was not accepted. | Retry the submission. If it keeps happening, remove the attachment and contact support. |
+| `500` | `storage_failed` | The submission could not be durably stored. | Retry once. If it keeps happening, contact support. |
+| `503` | `storage_failed` | Submission storage is temporarily unavailable. | Wait briefly and retry. Repeated failures should be reported to support. |
 
 ## Success responses
 
@@ -67,4 +70,4 @@ Redirect URLs must be absolute `https://` URLs. For local development, `http://l
 
 ## Private API errors
 
-This page focuses on public form submissions. Private API routes use the same general JSON error shape, but private API authentication, scopes, and endpoint-specific responses are documented in the [Private API docs](/docs/api/).
+This page focuses on public form submissions. Private API routes use the same general JSON error shape, but private API authentication, scopes, and endpoint-specific responses are documented in the [Private API docs](api.md).

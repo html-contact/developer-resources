@@ -102,12 +102,14 @@ These field names are read by html.contact and stored separately from normal sub
 | `_redirect` | Considers this URL for post-submit redirect before the form's Redirect URL setting. |
 | `_replyto` | Sets Reply-To from a literal email address or from another submitted field. |
 | `_gotcha` | Honeypot field. Filled values are rejected before email delivery. |
-| `_hc_hp_*` | Honeypot field prefix. Any field name beginning with `_hc_hp_` is stored separately and rejected if filled. |
+| `_hc_hp_*` | Autofill-resistant honeypot field prefix. Any field name beginning with `_hc_hp_` is stored separately and rejected if filled. |
 | `form_key` | Public form key used by the `/submit` compatibility endpoint. |
 | `_form_name` | Reserved metadata field. It does not rename the form in your account. |
 | `_source` | Reserved metadata field. It does not replace browser source checks. |
 | `_tag` | Reserved metadata field. It does not route email. |
 | `cf-turnstile-response` | Reserved for customer-managed challenge data. Default snippets do not require CAPTCHA or Turnstile. |
+
+For `_hc_hp_*` honeypots, use neutral names such as `_hc_hp_extra`, `_hc_hp_optional`, `_hc_hp_notes`, `_hc_hp_details`, `_hc_hp_blank`, or `_hc_hp_context`. Avoid profile/autofill-shaped names such as `_hc_hp_company`, `_hc_hp_name`, `_hc_hp_email`, `_hc_hp_phone`, `_hc_hp_website`, and `_hc_hp_address`, including in the field `id`, label, placeholder, or `autocomplete` value.
 
 ## Fields that do not control email
 
@@ -125,6 +127,8 @@ These fields are allowed, but they are stored as ordinary submitted fields only:
 `_intro` does not override the form's default intro.
 
 `_to`, `_cc`, `_bcc`, and `_from` never control recipients, CC/BCC, sender identity, Reply-To, or routing. Recipients are configured inside html.contact.
+
+The server-owned notification identity is `{Form name} via html.contact <forms@notify.html.contact>`. A valid inferred submitter email may be used only for Reply-To. See [Email Notifications & Safe Sender](email-notifications.md) for safe-sender guidance.
 
 ## File fields
 

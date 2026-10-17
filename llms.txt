@@ -2,13 +2,13 @@
 
 Email for forms. No backend needed.
 
-html.contact is a hosted form backend for normal HTML forms. It receives browser form posts, sends email notifications, stores submission history, screens spam, enforces allowed source domains, supports one attachment per valid submission, exports CSV/JSON, and exposes a scoped private API.
+html.contact is a hosted form backend for normal HTML forms. It receives browser form posts, sends email notifications, stores submission history, screens spam, enforces allowed source domains, supports one attachment per valid submission, and exports CSV. A scoped private Agency API is available on request to Agency pilot accounts.
 
 ## Best fit
 
 - Static sites, landing pages, portfolios, small business sites, no-code pages, and frontend framework pages that need a working contact or intake form.
 - AI-built websites from tools such as Lovable, Bolt, v0, Replit, Cursor, Claude, or other coding agents when the generated form UI needs a real backend.
-- Client or agency sites that need verified recipients, To/CC/BCC routing, allowed domains, spam screening, logs, exports, attachments, and API access without custom infrastructure.
+- Client or agency sites that need verified recipients, To/CC/BCC routing, allowed domains, spam screening, logs, exports, and attachments without custom infrastructure.
 
 ## Not a fit
 
@@ -37,26 +37,42 @@ Replace `hc_pub_REPLACE` with the public form key from html.contact. Public `hc_
 - Use `multipart/form-data` only when the form includes a file input.
 - Public JSON request bodies are not supported for browser form submissions.
 - Recipients, CC/BCC, sender behavior, allowed domains, redirects, and notification defaults are configured in html.contact.
+- Form notifications and form test emails use `{Form name} via html.contact <forms@notify.html.contact>`; safe-sender rules should match the exact address, not only the display name.
 - Do not use `_to`, `_from`, `_cc`, or `_bcc` as hidden routing fields.
 - Use `_replyto` for Reply-To behavior and `subject` for a submitted subject.
-- Use `_gotcha` or an `_hc_hp_*` honeypot field for a hidden bot trap.
+- Use an autofill-resistant `_hc_hp_*` honeypot field for a hidden bot trap. Good names include `_hc_hp_extra`, `_hc_hp_optional`, `_hc_hp_notes`, `_hc_hp_details`, `_hc_hp_blank`, and `_hc_hp_context`. Avoid profile-shaped names such as `_hc_hp_company`, `_hc_hp_name`, `_hc_hp_email`, `_hc_hp_phone`, `_hc_hp_website`, and `_hc_hp_address`.
 - Do not add CAPTCHA or Turnstile fields to the default snippet.
 
 ## API boundary
 
 - Public form submissions use `hc_pub_` keys with `POST /f/{formKey}` or the `/submit` compatibility route.
-- Private API calls use `Authorization: Bearer hc_live_...` from trusted servers, automations, or approved agent workflows.
-- The private API covers form management, submissions, CSV exports, authenticated attachment downloads, and safe usage summaries.
-- API keys cannot manage billing, payment methods, invoices, linked emails, API keys, account settings, or destructive dashboard actions.
+- Agency API calls use an account-owned Agency API key at `/api/v1/accounts/{accountId}` from trusted server-side automation.
+- Full keys cover the entire account and every Agency API capability. Restricted keys combine a specific-workspace or entire-account boundary with selected capabilities. Keys may have no expiration or expire within one year. Legacy personal keys, sessions, and OAuth/MCP tokens cannot authorize them.
+- Mutations require `Idempotency-Key`; updates and lifecycle changes also use the latest `ETag` in `If-Match`.
+- The API covers clients, bounded form settings, usage/submission reads, CSV exports, and authenticated attachment downloads. Recipient, billing, credential, integration, destructive form, and submission-mutation operations remain outside it.
+
+## Response integrations
+
+- Slack notifications and signed webhooks are available on every plan. Configure them in each form's dashboard Connections tab; they export future accepted responses and provide delivery history and retries.
+- Google Sheets appends new accepted responses to a dedicated worksheet with automatic columns. It has no paid-plan requirement, but access is currently limited to enabled pilot accounts.
+- Guides: https://html.contact/docs/slack, https://html.contact/docs/webhooks, and https://html.contact/docs/google-sheets.
+- Integration connection management is dashboard-only; do not use private API keys or MCP tools to configure these destinations.
+
+## MCP integration
+
+- The hosted MCP endpoint is `https://html.contact/mcp`. Verified, fully onboarded accounts can connect supported clients without an invitation. The OpenAI directory listing is not yet published.
+- MCP uses scoped OAuth and does not accept browser sessions, `hc_live_` API keys, Google tokens, or LinkedIn tokens as MCP bearer tokens.
+- See `https://html.contact/docs/mcp` for the current twenty-tool workflow, documentation retrieval, form diagnosis and code review, form and recipient updates, confirmations, separate recipient/submission scopes, side effects, and revocation guidance.
 
 ## Pricing model
 
-Pricing is based on accepted submission volume, not feature gates.
+Pricing for the core form product is based on accepted submission volume. There is no Agency plan yet. Agency features, including client workspaces, the Agency API, and Agency API keys, are available on request to pilot accounts and are not part of Free, Starter, or Pro. To ask about Agency access, use https://html.contact/contact.
 
 - Free: $0, no credit card, 250 lifetime accepted submissions.
-- Starter: $8/month, 1,000 accepted submissions per billing period.
-- Pro: $19/month, 5,000 accepted submissions per billing period.
-- Every plan includes the same core setup. Paid plans raise accepted submission volume.
+- Starter: $8/month, 1,000 accepted submissions per month.
+- Pro: $19/month, 5,000 accepted submissions per month.
+- Prices are shown as-is. html.contact does not collect sales tax or VAT at checkout.
+- Every listed self-serve plan includes the same core form setup. Paid plans raise accepted submission volume.
 - Spam, rejected requests, and blocked requests do not burn normal accepted submission volume.
 
 ## Canonical resources
@@ -65,7 +81,9 @@ Pricing is based on accepted submission volume, not feature gates.
 - Examples: https://html.contact/examples
 - HTML form rules: https://html.contact/docs/html-forms
 - Domains and spam: https://html.contact/docs/domains-and-spam
+- Email notifications and safe sender: https://html.contact/docs/email-notifications
 - API docs: https://html.contact/docs/api
+- MCP connection guide: https://html.contact/docs/mcp
 - OpenAPI JSON: https://html.contact/openapi.json
 - Public agent guide: https://html.contact/agents.md
 - Full agent context: https://html.contact/llms-full.txt

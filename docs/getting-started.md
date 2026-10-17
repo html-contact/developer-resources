@@ -15,11 +15,15 @@ https://html.contact/f/hc_pub_REPLACE
 
 Replace `hc_pub_REPLACE` with the public form key from your form. Public form keys start with `hc_pub_` and are safe to put in frontend HTML.
 
-## 2. Choose the recipient
+## 2. Choose notification behavior
 
-Choose the inbox that should receive submissions. If html.contact asks you to verify that recipient, finish verification before expecting live email delivery.
+Email is optional. You can leave notifications off and use the html.contact dashboard as the submission inbox. This does not require a recipient.
+
+To receive email notifications, choose the inbox that should receive submissions and enable notification email. If html.contact asks you to verify that recipient, finish verification before expecting delivery.
 
 Recipients, CC/BCC, and sender behavior are configured inside html.contact. Do not add hidden public form fields to route email.
+
+Notifications arrive from `forms@notify.html.contact` with the visible name `{Form name} via html.contact`. See [Email Notifications & Safe Sender](email-notifications.md) before creating mailbox rules.
 
 ## 3. Add your website hostname
 
@@ -54,14 +58,15 @@ Use your public endpoint as the form action and submit with `method="POST"`. Eve
 
 ## 5. Test the flow
 
-Publish the page and submit the form from the hostname you added. You should receive an email notification and see the submission in html.contact.
+Publish the page and submit the form from the hostname you added. You should see the accepted submission in html.contact. If notification email is enabled with a verified recipient, you should also receive the email notification.
 
 Testing from a different site can return `domain_not_allowed`. Testing with a raw server or curl request can return `origin_missing` unless direct submissions are enabled for that form.
 
 ## Next steps
 
-- Add a production-ready honeypot and reply-to field with [Production HTML](/examples/production-html-contact-form/).
-- Add arbitrary named fields with [Custom Fields](/examples/custom-fields/).
-- Add a file input with [Attachments](/examples/attachments/).
-- Check field behavior in [Form Fields](/docs/form-fields/).
-- Diagnose setup issues with [Troubleshooting](/docs/troubleshooting/).
+- Add a production-ready honeypot and reply-to field with [Production HTML](../examples/production-html-contact-form.md).
+- Add arbitrary named fields with [Custom Fields](../examples/custom-fields.md).
+- Add a file input with [Attachments](../examples/attachments.md).
+- Check field behavior in [Form Fields](form-fields.md).
+- Recognize notifications and configure mailbox rules with [Email Notifications & Safe Sender](email-notifications.md).
+- Diagnose setup issues with [Troubleshooting](troubleshooting.md).

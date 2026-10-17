@@ -40,4 +40,4 @@ If your Webflow form includes a file upload, the form needs to submit as `multip
 
 Email notifications link to authenticated attachment downloads. In the dashboard, open the submission, find **Attachments**, then use **File** to view or download the upload. Scan unknown downloads with your security tools before opening them.
 
-For the full HTML reference, see [Simple HTML Contact Form](/examples/simple-html-contact-form/).
+For the full HTML reference, see [Simple HTML Contact Form](simple-html-contact-form.md).

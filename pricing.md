@@ -1,8 +1,8 @@
 # html.contact Pricing
 
-Last updated: June 18, 2026
+Last updated: September 4, 2026
 
-html.contact pricing is based on accepted submission volume, not feature gates. Every plan includes the full form backend setup. Paid plans only raise how many accepted submissions the account can receive.
+html.contact core-form pricing is based on accepted submission volume. Every listed plan includes the full browser form backend setup, and paid plans raise how many accepted submissions the account can receive. There is no Agency plan yet. Agency features, including client workspaces, the Agency API, and Agency API keys, are available on request to pilot accounts and are not part of Free, Starter, or Pro. To ask about Agency access, use https://html.contact/contact.
 
 ## Plans
 
@@ -22,8 +22,15 @@ html.contact pricing is based on accepted submission volume, not feature gates. 
 - Domain allowlists
 - Server-side spam screening
 - Submission logs
-- CSV and JSON exports
-- Public form submissions and API access
+- CSV exports
+- Public browser and server-side form submissions
+- Slack notifications: one channel per form
+- Signed webhooks: up to three endpoints per form, with delivery history and retries
+- MCP access for supported AI and coding-agent clients
+
+Google Sheets has no paid-plan requirement, but access is currently limited to enabled pilot accounts. Each form connects to one dedicated response worksheet. See https://html.contact/docs/google-sheets for availability.
+
+MCP requires a verified account with completed onboarding and a supported client. The ChatGPT directory listing is not published yet. See https://html.contact/docs/mcp for setup.
 
 ## Core pricing rules
 
@@ -31,12 +38,14 @@ html.contact pricing is based on accepted submission volume, not feature gates. 
 - Pricing changes by accepted submission volume only.
 - Spam, rejected requests, and blocked requests do not burn normal accepted submission volume.
 - One accepted submission counts once, whether it emails To only, To + CC, or To + CC + BCC.
+- Sending the same accepted response to Slack, Sheets, or webhook destinations does not add submission usage. Integration tests and delivery retries do not consume submission volume.
 - No credit card is required to start on the free plan.
 - Upgrade when accepted submission volume grows.
+- Prices are shown as-is. html.contact does not collect sales tax or VAT at checkout.
 
 ## Differentiator
 
-Many form backends gate production features behind paid tiers. html.contact does not. Attachments, recipient routing, verified linked emails, domain allowlists, spam screening, logs, exports, and API access are included from the start. The plan only determines accepted submission volume.
+Many form backends gate normal form features behind paid tiers. html.contact includes attachments, recipient routing, verified linked emails, domain allowlists, spam screening, logs, and CSV exports from the start. The listed plan determines accepted submission volume. Agency features are available on request during the Agency pilot.
 
 ## Related public resources
 

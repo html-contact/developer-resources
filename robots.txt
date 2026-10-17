@@ -7,8 +7,10 @@
 # - https://html.contact/agents.md
 # - https://html.contact/pricing.md
 # - https://html.contact/openapi.json
+# - https://html.contact/.well-known/api-catalog
 # - https://html.contact/humans.txt
 # - https://github.com/html-contact/developer-resources
+Content-Signal: ai-train=yes, search=yes, ai-input=yes
 
 User-agent: GPTBot
 User-agent: ChatGPT-User

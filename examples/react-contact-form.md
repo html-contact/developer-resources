@@ -32,4 +32,4 @@ export function ContactForm() {
 - Add the exact deployed hostname to your form's allowed domains before testing.
 - Add any named fields you need. html.contact stores submitted values by each input's `name` attribute.
 - For selects, checkboxes, and radios, the submitted `value` is what gets stored under that field name.
-- Use [Production HTML](/examples/production-html-contact-form/) for reply-to, honeypot, subject, and redirect options.
+- Use [Production HTML](production-html-contact-form.md) for reply-to, honeypot, subject, and redirect options.

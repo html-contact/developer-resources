@@ -85,12 +85,14 @@ These names are read by html.contact and stored separately from normal submitted
 | `_redirect` | After a successful submission, this redirect is considered before the dashboard redirect setting. Redirects must use `https://`, except `http://localhost:*` and `http://127.0.0.1:*` for local development. |
 | `_replyto` | Sets Reply-To from a literal email address or a submitted field name. For example, `_replyto=email` uses the submitted `email` field. |
 | `_gotcha` | Honeypot field. Real visitors should leave it empty; filled values are rejected before email delivery. |
-| `_hc_hp_*` | Honeypot field prefix. Any field name that starts with `_hc_hp_` is stored as a system field and rejected if filled. |
+| `_hc_hp_*` | Autofill-resistant honeypot field prefix. Any field name that starts with `_hc_hp_` is stored as a system field and rejected if filled. |
 | `form_key` | Public form key used by the `/submit` compatibility endpoint. |
 | `_form_name` | Reserved metadata field stored with system fields. It does not rename the form in your account. |
 | `_source` | Reserved metadata field stored with system fields. It does not replace browser source checks. |
 | `_tag` | Reserved metadata field stored with system fields. It does not route email. |
 | `cf-turnstile-response` | Reserved for customer-managed challenge data. The default html.contact snippet does not require CAPTCHA or Turnstile code. |
+
+For `_hc_hp_*` honeypots, choose neutral names such as `_hc_hp_extra`, `_hc_hp_optional`, `_hc_hp_notes`, `_hc_hp_details`, `_hc_hp_blank`, or `_hc_hp_context`. Do not use profile/autofill-shaped names such as `_hc_hp_company`, `_hc_hp_name`, `_hc_hp_email`, `_hc_hp_phone`, `_hc_hp_website`, or `_hc_hp_address`, and avoid those words in the honeypot `id`, label, placeholder, or `autocomplete` value.
 
 If `_replyto` is absent, html.contact can still infer Reply-To from common submitted email fields such as `email`, `Email`, `your_email`, `your-email`, `reply_to`, `replyTo`, and `contact_email`.
 
@@ -109,7 +111,7 @@ These fields are allowed, but they are stored as ordinary submitted fields only:
 
 `_intro` does not override the dashboard default intro.
 
-`_to`, `_cc`, `_bcc`, and `_from` never control recipients, CC/BCC, sender identity, Reply-To, or routing. Recipients are configured inside html.contact or through the intended form-management API.
+`_to`, `_cc`, `_bcc`, and `_from` never control recipients, CC/BCC, sender identity, Reply-To, or routing. Recipients are configured in the html.contact dashboard, or by a connected [MCP client](mcp.md) with the separate recipient scopes. The Agency API does not manage recipients.
 
 Private API keys that start with `hc_live_` should never appear in browser HTML.
 
@@ -139,7 +141,7 @@ Use `/submit` only when you need the public key in the form body instead of the 
 
 Both `/f/hc_pub_REPLACE` and `/submit` use the same validation, spam screening, source checks, usage limits, and delivery flow.
 
-For a complete field reference, see [Form Fields](/docs/form-fields/).
+For a complete field reference, see [Form Fields](form-fields.md).
 
 ## JSON responses while testing
 
@@ -164,4 +166,4 @@ Successful JSON response:
 }
 ```
 
-For failure codes and setup fixes, see [Error Responses](/docs/error-responses/) and [Troubleshooting](/docs/troubleshooting/).
+For failure codes and setup fixes, see [Error Responses](error-responses.md) and [Troubleshooting](troubleshooting.md).

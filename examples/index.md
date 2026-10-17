@@ -9,17 +9,17 @@ Use these examples when you want a working form quickly. Each page starts with c
 
 | Example | Best for | What it shows |
 | --- | --- | --- |
-| [Simple HTML](/examples/simple-html-contact-form/) | Any website that can post a normal form | The smallest working contact form |
-| [Production HTML](/examples/production-html-contact-form/) | Real contact pages | Reply-to, honeypot support, subject, and optional redirect |
-| [Custom Fields](/examples/custom-fields/) | Intake, quote, and application forms | Arbitrary named fields and checkbox groups |
-| [Attachments](/examples/attachments/) | Forms that need one uploaded file | `multipart/form-data` and one file input |
-| [Astro contact form](/examples/astro-contact-form/) | Static Astro sites and Astro islands | A plain form in an Astro page |
-| [Next.js contact form](/examples/nextjs-contact-form/) | App Router and static Next.js pages | A direct browser form post without a server action |
-| [React contact form](/examples/react-contact-form/) | React apps and static React pages | A normal form rendered by React |
-| [Vue contact form](/examples/vue-contact-form/) | Vue apps and static Vue pages | A normal form rendered by Vue |
-| [Webflow contact form](/examples/webflow-contact-form/) | Designer-built sites | How to point a Webflow form at html.contact |
-| [AI website builders](/examples/ai-website-builders/) | Lovable, Bolt, v0, Replit, Cursor, Claude, and Codex workflows | A prompt your builder can follow |
-| [Server-Side POST](/examples/http-post/) | Server scripts, jobs, and custom backends | cURL, Node, Python, and PHP examples |
+| [Simple HTML](simple-html-contact-form.md) | Any website that can post a normal form | The smallest working contact form |
+| [Production HTML](production-html-contact-form.md) | Real contact pages | Reply-to, honeypot support, subject, and optional redirect |
+| [Custom Fields](custom-fields.md) | Intake, quote, and application forms | Arbitrary named fields and checkbox groups |
+| [Attachments](attachments.md) | Forms that need one uploaded file | `multipart/form-data` and one file input |
+| [Astro contact form](astro-contact-form.md) | Static Astro sites and Astro islands | A plain form in an Astro page |
+| [Next.js contact form](nextjs-contact-form.md) | App Router and static Next.js pages | A direct browser form post without a server action |
+| [React contact form](react-contact-form.md) | React apps and static React pages | A normal form rendered by React |
+| [Vue contact form](vue-contact-form.md) | Vue apps and static Vue pages | A normal form rendered by Vue |
+| [Webflow contact form](webflow-contact-form.md) | Designer-built sites | How to point a Webflow form at html.contact |
+| [AI website builders](ai-website-builders.md) | Lovable, Bolt, v0, Replit, Cursor, Claude, and Codex workflows | A prompt your builder can follow |
+| [Server-Side POST](http-post.md) | Server scripts, jobs, and custom backends | cURL, Node, Python, and PHP examples |
 
 ## Endpoint styles
 
@@ -43,7 +43,7 @@ Use `/f/hc_pub_REPLACE` first. Use `/submit` only when you need the public key i
 
 ## Useful docs
 
-- [HTML Forms](/docs/html-forms/)
-- [Domains & Spam](/docs/domains-and-spam/)
-- [Attachments](/docs/attachments/)
-- [API Overview](/docs/api/)
+- [HTML Forms](../docs/html-forms.md)
+- [Domains & Spam](../docs/domains-and-spam.md)
+- [Attachments](../docs/attachments.md)
+- [API Overview](../docs/api.md)
